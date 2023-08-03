@@ -68,8 +68,9 @@ def GalRingMap (σ : L ≃ₐ[K] L) : RingHom (𝓞 L) (𝓞 L) := {
     AddMemClass.mk_add_mk, Subtype.forall, implies_true, forall_const]
 }
 
-theorem PrimeIdealsAreConjugatesOfEachother [IsGalois K L] {p : Ideal (𝓞 K)} {P1 P2 : Ideal (𝓞 L)} [P1.IsPrime]
-  [P2.IsPrime] (h1 : p = comap (algebraMap (𝓞 K) (𝓞 L)) P1) (h2 : p = comap (algebraMap (𝓞 K) (𝓞 L)) P2) :
+theorem PrimeIdealsAreConjugatesOfEachother [IsGalois K L] {p : Ideal (𝓞 K)} {P1 P2 : Ideal (𝓞 L)}
+  [P1.IsPrime] [P2.IsPrime] (h1 : p = comap (algebraMap (𝓞 K) (𝓞 L)) P1) 
+  (h2 : p = comap (algebraMap (𝓞 K) (𝓞 L)) P2) :
   ∃ σ : L ≃ₐ[K] L, map (GalRingMap σ) P1 = P2  := sorry
 
 def DecompositionGroup [IsGalois K L] (P : Ideal (𝓞 L)) [P.IsPrime]  : Subgroup (L ≃ₐ[K] L) := {
