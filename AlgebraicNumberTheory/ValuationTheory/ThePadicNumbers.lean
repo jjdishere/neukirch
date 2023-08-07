@@ -8,6 +8,9 @@ import Mathlib.Data.ZMod.Basic
 import Mathlib.RingTheory.MvPolynomial.Basic
 import Mathlib.Data.Polynomial.Eval
 import Mathlib.Data.Polynomial.Basic
+import Mathlib.Deprecated.Subring
+import Mathlib.Data.Int.ModEq
+import Mathlib.Tactic
 
 variable {p : ℕ} [Fact p.Prime]
 
@@ -38,8 +41,16 @@ represented in the form
 
 #check Subring.mk
 
--- lemma Zsubring {ℤ : Set ℤ_[p]} : IsSubring ℤ := sorry
+#check Set.univ
 
-theorem Prop1_4 (f : Type _) (f : Polynomial ℤ) : (∀ v : ℕ, ∃ u : ℤ, (↑(p^v) : ℤ) ∣ Polynomial.eval u f) 
-  ↔ ∃ y : ℤ_[p], Polynomial.eval y f = 0 := sorry
+instance zp_inst [inst : Ring ℤ_[p]] : @IsSubring _ inst (@Set.univ ℤ) := sorry
 
+lemma subring_z : Subring ℤ_[p] := by sorry
+
+#check zp_inst
+
+-- lemma Zsubring {_ : Set ℤ_[p]} : IsSubring ℤ := sorry
+-- ≡ 
+
+theorem Prop1_4 (f : Type _) (f : Polynomial ℤ): (∀ v : ℕ, ∃ u : ℤ, (↑(p^v) : ℤ) ∣ Polynomial.eval u f) 
+  ↔ ∃ y : ℤ_[p], Polynomial.eval y (Polynomial.ofSubring ℤ f) = 0 := sorry
