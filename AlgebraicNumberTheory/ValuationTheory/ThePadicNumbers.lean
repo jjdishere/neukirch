@@ -35,15 +35,11 @@ represented in the form
   and fix a prime number 
 -/
 
-theorem not_monotone_iff {f : ℝ → ℝ} : ¬Monotone f ↔ ∃ x y, x ≤ y ∧ f x > f y := by
-  rw [Monotone]
-  push_neg
-  rfl
-
-
 
 #check Subring.mk
 
-theorem Prop1_4 (f : Type _) (f : Polynomial ℤ ) : (∀ v : ℕ, ∃ u : ℤ, (↑(p^v) : ℤ) ∣ Polynomial.eval u f) 
-  ↔ ∃ y : ℤ_[p], Polynomial.eval y (f.ofSubring (fun xs => sorry)) = 0 := sorry
+-- lemma Zsubring {ℤ : Set ℤ_[p]} : IsSubring ℤ := sorry
+
+theorem Prop1_4 (f : Type _) (f : Polynomial ℤ) : (∀ v : ℕ, ∃ u : ℤ, (↑(p^v) : ℤ) ∣ Polynomial.eval u f) 
+  ↔ ∃ y : ℤ_[p], Polynomial.eval y f = 0 := sorry
 
