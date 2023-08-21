@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2023 Hu Yongle. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Hu Yongle
+-/
 import Mathlib.Tactic
 import Mathlib.RingTheory.ClassGroup
 import Mathlib.RingTheory.LocalProperties
@@ -306,6 +311,36 @@ def FractionalIdeal.Subalgebra_map (A : Subalgebra R K) [IsDedekindDomain A] :
       have hm : I.1 * J.1 = (I * J).1 := by simp only [val_eq_coe, coe_mul]
       rw[hm, ceo_commute K I, ceo_commute K J, ceo_commute K (I * J)] at hij
       exact hij.trans (@Submodule.subset_span A K _ _ _ ((I * J) : Set K))
+
+
+
+def set_Submonoid : Submonoid R where
+  carrier := {x : R | x ≠ 0 ∧ ∀ p : HeightOneSpectrum R, x ∈ p.1 → p ∈ S }
+  mul_mem' := fun {_ _} hx hy ↦ ⟨mul_ne_zero hx.left hy.left, fun p hxy ↦ Or.casesOn
+    (IsPrime.mem_or_mem p.isPrime hxy) (fun h ↦ And.right hx p h) (fun h ↦ And.right hy p h)⟩
+  one_mem' := ⟨one_ne_zero, fun p hp ↦ False.elim <|
+    IsMaximal.ne_top (HeightOneSpectrum.isMaximal p) (Iff.mpr (eq_top_iff_one p.1) hp)⟩
+
+lemma set_Submonoid_le : (set_Submonoid S) ≤ nonZeroDivisors R :=
+  le_nonZeroDivisors_of_noZeroDivisors fun h ↦ And.left h rfl
+
+-- It may only hold in the cases of Number Fields.
+instance : IsLocalization (set_Submonoid S) (Set.integer S K) where
+  map_units' := by
+    intro x
+    apply isUnit_iff_exists_inv.mpr
+    refine' ⟨⟨(algebraMap R K x.1)⁻¹, _⟩, _⟩
+    · intro p hp
+      have h : (HeightOneSpectrum.intValuation p) x.1 = 1 := Decidable.byContradiction fun h ↦
+        hp <| x.2.2 p <| Iff.mp dvd_span_singleton <|
+          (HeightOneSpectrum.int_valuation_lt_one_iff_dvd p x.1).mp <|
+            Ne.lt_of_le h (HeightOneSpectrum.int_valuation_le_one p x.1)
+      rw[map_inv₀, HeightOneSpectrum.valuation_of_algebraMap, h]
+      exact Eq.ge rfl
+    · exact Subtype.val_inj.mp <| mul_inv_cancel <|
+        (map_ne_zero_iff (algebraMap R K) (NoZeroSMulDivisors.algebraMap_injective R K)).mpr x.2.1
+  surj' := sorry 
+  eq_iff_exists' := sorry
 
 
 
