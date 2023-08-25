@@ -1,9 +1,6 @@
-/- Seems like everything in this file goes well. For now. (I'm still defing things irrelavant to `ℤ_[p]`.)
-
-Current goal: 
-Define morphisms of type `R⟦X⟧ → S`, denoted `aux_eval₂` for the function version and `aux_eval₂hom` for the ring-hom version.
-Then use `aux_eval₂hom` to define `ℤ⟦X⟧ → ℤ/p^n`, mapping `X → p`.
-I want to replace `aux_` with `PowerSeries.`. Is that ok?
+/- 
+Current goal: show that `eval₂` is a ring morphism, i.e. `eval₂hom`
+maybe i shouldn't use `trunc` in the def of `eval₂`? 
 -/
 
 
@@ -18,42 +15,66 @@ open BigOperators
 
 variable {p : ℕ} [Fact p.Prime]
 
-section Prop_2_6
+noncomputable section Prop_2_6
+-- can't def `PowerSeries.finsum` without the `noncomputable`
 
 
-open PowerSeries
+namespace PowerSeries
 
 /- Question: can I define the notation for powerseries as bellow? 
 As this notation haven't been defined but the similar one for Polynomial IS defined, I think there is some reason behind...
 -/
--- scoped[PowerSeries] notation:9000 R "⟦X⟧ " => PowerSeries R
+scoped[PowerSeries] notation:9000 R "⟦X⟧ " => PowerSeries R
 
 variable {R : Type u0} [CommRing R] {S : Type u1} [CommRing S]
 
+def finsum (n : ℕ) (φ : R⟦X⟧) (f : ℕ → R → S) : S := (φ.trunc n).sum f
 
 -- For a nilpotent element `s : S`, assignment `X ↦ s` defines a ring homomorphism `R⟦X⟧ → S`
-def aux_eval₂ (f : R →+* S) (s : nilradical S) (p : PowerSeries R) : S := by
+
+variable (f : R →+* S) (s : nilradical S)
+
+def eval₂ (φ : R⟦X⟧) : S := by
   rcases s with ⟨s, s_prop⟩
-  choose n sn0 using s_prop
-  -- TODO : define `aux_eval₂ f s` as the sum of terms lower than `n`
-  
+  choose n _ using s_prop
+  exact (φ.trunc n).eval₂ f s
 
 
-def aux_eval₂hom (f : R →+* S) (s : nilradical S) : PowerSeries R →+* S where
-  toFun := aux_eval₂ f s
-  map_one' := _
+theorem eval₂_zero : eval₂ f s 0 = 0 := by
+  simp only [eval₂, Submodule.zero_eq_bot, Ideal.mem_bot, trunc_zero, Polynomial.eval₂_zero]
+
+
+
+theorem eval₂_one : eval₂ f s 1 = 1 := by
+  simp only [eval₂]
+  -- the goal turns into a term with  `classical.choose` in it. how to deal with?
+  sorry
+
+
+def eval₂hom : R⟦X⟧ →+* S where
+  toFun := eval₂ _ _
+  map_one' := eval₂_one f s
   map_mul' := _
-  map_zero' := _
+  map_zero' := eval₂_zero f s
   map_add' := _
 
 
+
+end PowerSeries
+
+
+open PowerSeries
+
 -- `a` is nilpotent in `ℤ ⧸ a ^ n`.
 lemma aux3 {a n : ℕ} : (a : ZMod (a ^ n)) ∈ nilradical (ZMod (a ^ n)) := by
-  rw [mem_nilradical]; use n; exact Trans.trans (Nat.cast_pow a n).symm (ZMod.nat_cast_self (a ^ n))
+  rw [mem_nilradical]
+  use n
+  exact Trans.trans (Nat.cast_pow a n).symm (ZMod.nat_cast_self (a ^ n))
 
--- The homomorphism `ℤ⟦X⟧ → ℤ⧸a^n` mapping `X` to `a`.
+
+-- The homomorphism `ℤ⟦X⟧ → ℤ ⧸ a ^ n` mapping `X` to `a`.
 def ZMod.pow_ofPowerSeriesZ {a : ℕ} : (n : ℕ) → PowerSeries ℤ →+* ZMod (a ^ n) := 
-  fun n ↦ aux_eval₂hom (Int.castRingHom (ZMod (a^n))) {
+  fun n ↦ eval₂hom (Int.castRingHom (ZMod (a^n))) {
     val := a
     property := aux3
   }
@@ -79,6 +100,5 @@ theorem PadicInt.ker_ofPowerSeries :
 
 
 end Prop_2_6
-
 
 
