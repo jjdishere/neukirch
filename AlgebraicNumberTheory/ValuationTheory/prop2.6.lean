@@ -1,6 +1,5 @@
 /- 
-Current goal: show that `eval₂` is a ring morphism, i.e. `eval₂hom`
-maybe i shouldn't use `trunc` in the def of `eval₂`? 
+Current goal: show that `eval₂` is a ring morphism, i.e. `eval₂RingHom`
 -/
 
 
@@ -10,55 +9,92 @@ import Mathlib.RingTheory.PowerSeries.WellKnown
 import Mathlib.RingTheory.Nilpotent
 
 open PadicInt
-open BigOperators
 
 
 variable {p : ℕ} [Fact p.Prime]
 
 noncomputable section Prop_2_6
--- can't def `PowerSeries.finsum` without the `noncomputable`
+
 
 
 namespace PowerSeries
 
-/- Question: can I define the notation for powerseries as bellow? 
-As this notation haven't been defined but the similar one for Polynomial IS defined, I think there is some reason behind...
--/
+
+/- This notation may not be used. -/
 scoped[PowerSeries] notation:9000 R "⟦X⟧ " => PowerSeries R
 
-variable {R : Type u0} [CommRing R] {S : Type u1} [CommRing S]
+section
 
-def finsum (n : ℕ) (φ : R⟦X⟧) (f : ℕ → R → S) : S := (φ.trunc n).sum f
+open Classical
 
--- For a nilpotent element `s : S`, assignment `X ↦ s` defines a ring homomorphism `R⟦X⟧ → S`
+variable {R : Type _} [CommRing R] {S : Type _} [CommRing S]
+
+def sum (n : ℕ) (φ : R⟦X⟧) (F : ℕ → R → S) : S := (φ.trunc n).sum F
 
 variable (f : R →+* S) (s : nilradical S)
 
-def eval₂ (φ : R⟦X⟧) : S := by
-  rcases s with ⟨s, s_prop⟩
-  choose n _ using s_prop
-  exact (φ.trunc n).eval₂ f s
+def eval₂ (φ : R⟦X⟧) : S := (φ.trunc (choose s.property)).eval₂ f s.val
 
+theorem eval₂_eq_sum (φ : R⟦X⟧) : φ.eval₂ f s = φ.sum (choose s.2) fun e r ↦ f r * s.1 ^ e := by
+  simp only [sum, eval₂, Polynomial.eval₂_eq_sum]
 
-theorem eval₂_zero : eval₂ f s 0 = 0 := by
+theorem eval₂_congr {f g : R →+* S} {s t : nilradical S} {φ ψ : R⟦X⟧} : f = g → s = t → φ = ψ → eval₂ f s φ = eval₂ g t ψ := by
+  rintro rfl rfl rfl; rfl
+
+-- @[simp]
+-- theorem eval₂_at_zero : φ.eval₂ f ({0 IsNilpotent.zero} : nilradical S) = f (φ.coeff 0) := by
+
+@[simp]
+theorem eval₂_zero : (0 : R⟦X⟧).eval₂ f s = 0 := by
   simp only [eval₂, Submodule.zero_eq_bot, Ideal.mem_bot, trunc_zero, Polynomial.eval₂_zero]
 
-
-
-theorem eval₂_one : eval₂ f s 1 = 1 := by
+@[simp]
+theorem eval₂_C (a : R) : (C R a).eval₂ f s = f a := by
   simp only [eval₂]
-  -- the goal turns into a term with  `classical.choose` in it. how to deal with?
+  rw [trunc_C]
+  -- how? `choose` is not necessarily `≥ 1`.
+  -- possible solution: use `choose s.2 + 1` instead in the def
   sorry
 
+@[simp]
+theorem eval₂_X : X.eval₂ f s = s := by
+  sorry
+  -- similar porblem as the previous
 
-def eval₂hom : R⟦X⟧ →+* S where
-  toFun := eval₂ _ _
-  map_one' := eval₂_one f s
-  map_mul' := _
-  map_zero' := eval₂_zero f s
-  map_add' := _
+@[simp]
+theorem eval₂_monomial {n : ℕ} {a : R} : (monomial R n a).eval₂ f s = f a * s.1 ^ n := by
+  simp [eval₂_eq_sum]
+  sorry
 
+@[simp]
+theorem eval₂_X_pow {n : ℕ} : (X ^ n : R⟦X⟧).eval₂ f s = s.1 ^ n := by
+  sorry
 
+@[simp]
+theorem eval₂_add {ψ : R⟦X⟧}: (φ + ψ).eval₂ f s = φ.eval₂ f s + ψ.eval₂ f s := by
+  sorry
+
+def eval₂AddMonoidHom : R⟦X⟧ →+ S where
+  toFun := eval₂ f s
+  map_zero' := eval₂_zero _ _
+  map_add' _ _ := eval₂_add _ _
+
+@[simp]
+theorem eval₂_one : eval₂ f s 1 = 1 := by
+  sorry
+
+@[simp]
+theorem eval₂_mul {ψ : R⟦X⟧} : (φ * ψ).eval₂ f s = φ.eval₂ f s * ψ.eval₂ f s := by
+  sorry
+
+-- For a nilpotent element `s : S`, assignment `X ↦ s` defines a ring homomorphism `R⟦X⟧ → S`
+def eval₂RingHom : R⟦X⟧ →+* S := {
+  eval₂AddMonoidHom f s with
+  map_one' := eval₂_one _ _
+  map_mul' := fun _ _ ↦ eval₂_mul _ _
+}
+
+end
 
 end PowerSeries
 
@@ -67,14 +103,13 @@ open PowerSeries
 
 -- `a` is nilpotent in `ℤ ⧸ a ^ n`.
 lemma aux3 {a n : ℕ} : (a : ZMod (a ^ n)) ∈ nilradical (ZMod (a ^ n)) := by
-  rw [mem_nilradical]
   use n
   exact Trans.trans (Nat.cast_pow a n).symm (ZMod.nat_cast_self (a ^ n))
 
 
 -- The homomorphism `ℤ⟦X⟧ → ℤ ⧸ a ^ n` mapping `X` to `a`.
 def ZMod.pow_ofPowerSeriesZ {a : ℕ} : (n : ℕ) → PowerSeries ℤ →+* ZMod (a ^ n) := 
-  fun n ↦ eval₂hom (Int.castRingHom (ZMod (a^n))) {
+  fun n ↦ eval₂RingHom (Int.castRingHom (ZMod (a^n))) {
     val := a
     property := aux3
   }
@@ -100,5 +135,4 @@ theorem PadicInt.ker_ofPowerSeries :
 
 
 end Prop_2_6
-
 
