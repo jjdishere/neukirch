@@ -2,6 +2,7 @@ import Mathlib.Topology.Algebra.ValuedField
 import Mathlib.Analysis.Normed.Field.Basic
 import Mathlib.Data.Rat.NNRat
 import Mathlib.RingTheory.Ideal.Basic
+import Mathlib.Analysis.SpecialFunctions.Pow.Real
 
 
 variable {K : Type _} [Monoid K]
@@ -22,6 +23,12 @@ theorem de {a b c : ℝ} (h : a ≤ 1 ) (h₁ : b ≤  1) (h2 : c ≤ a ∨ c �
   rcases h2 with h₃ | h₄
   exact ge_trans h h₃
   exact ge_trans h₁ h₄
+
+theorem des {a b : ℝ } (ha : a > 0) (hb : b > 0) {s : ℝ} (h : s > 0) 
+(h1 : a ^ s = 1) : a = 1 := by 
+  have h₁ :  Real.log (a ^ s) = Real.log 1 := by exact congrArg Real.log h1
+  have h₂ : s * Real.log a = Real.log 1 := by sorry
+  sorry
 
 #check le_trans
 
