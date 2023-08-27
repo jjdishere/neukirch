@@ -38,19 +38,14 @@ represented in the form
   and fix a prime number 
 -/
 
-
-#check Subring.mk
-
-#check Set.univ
-
-instance zp_inst [inst : Ring ℤ_[p]] : @IsSubring _ inst (@Set.univ ℤ) := sorry
-
-lemma subring_z : Subring ℤ_[p] := by sorry
-
-#check zp_inst
-
 -- lemma Zsubring {_ : Set ℤ_[p]} : IsSubring ℤ := sorry
 -- ≡ 
 
-theorem Prop1_4 (f : Type _) (f : Polynomial ℤ): (∀ v : ℕ, ∃ u : ℤ, (↑(p^v) : ℤ) ∣ Polynomial.eval u f) 
-  ↔ ∃ y : ℤ_[p], Polynomial.eval y (Polynomial.ofSubring ℤ f) = 0 := sorry
+-- theorem Prop1_4 (f : Type _) (f : Polynomial ℤ): (∀ v : ℕ, ∃ u : ℤ, (↑(p^v) : ℤ) ∣ Polynomial.eval u f) 
+--   ↔ ∃ y : ℤ_[p], Polynomial.eval y (Polynomial.ofSubring ℤ f) = 0 := sorry
+
+
+theorem prop1_4
+  (F : Polynomial ℤ) : ∀v : ℕ, Polynomial.eval x F = (0 : ZMod (p ^ v)) 
+  ↔ ∃x : ℤ_[p], Polynomial.eval x (Polynomial.map (Int.castRingHom ℤ_[p]) F) = 0 
+  := by sorry 
