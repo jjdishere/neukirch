@@ -86,5 +86,3 @@ def PadicInt.toPowerSeriesZ : PowerSeries ℤ →+* ℤ_[p] :=
 theorem PadicInt.ker_toPowerSeries :
   RingHom.ker (PadicInt.toPowerSeriesZ : PowerSeries ℤ →+* ℤ_[p]) = Ideal.span {(PowerSeries.X : PowerSeries ℤ) - ↑p} := by sorry
 
-
-
