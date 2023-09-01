@@ -34,9 +34,52 @@ noncomputable instance NNRat.toNNReal: Coe NNRat NNReal where
     property := Iff.mpr Rat.cast_nonneg x.property
   }
 
-theorem Valuation.isEquiv_iff_val_gt_one [LinearOrderedCommGroupWithZero Γ₀]
-    [LinearOrderedCommGroupWithZero Γ'₀] (v : Valuation K Γ₀) (v' : Valuation K Γ'₀) :
-    v.IsEquiv v' ↔ ∀ {x : K}, v x > 1 ↔ v' x > 1 := sorry
+theorem Valuation.isEquiv_iff_val_gt_one {K : Type _} [DivisionRing K] {Γ₀ : Type _} {Γ'₀ : Type _}
+[LinearOrderedCommGroupWithZero Γ₀] [LinearOrderedCommGroupWithZero Γ'₀] 
+(v : Valuation K Γ₀) (v' : Valuation K Γ'₀) :
+v.IsEquiv v' ↔ ∀ {x : K}, v x > 1 ↔ v' x > 1 where
+  mp := by
+    intro h x
+    constructor
+    · intro h'
+      by_contra h₀
+      have h₁ : v' x ≤ 1 := not_lt.mp h₀ 
+      have h₂ : v x ≤ 1 := ((Valuation.isEquiv_iff_val_le_one v v').mp h).mpr h₁
+      apply (not_le.mpr h')
+      exact h₂
+    · intro h'
+      by_contra h₀
+      have h₁ : v x ≤ 1 := not_lt.mp h₀ 
+      have h₂ : v' x ≤ 1 := ((Valuation.isEquiv_iff_val_le_one v v').mp h).mp h₁
+      apply (not_le.mpr h')
+      exact h₂
+  mpr := by
+    intro h
+    apply (Valuation.isEquiv_iff_val_le_one v v').mpr
+    intro x
+    constructor
+    · intro h'
+      by_contra h₀
+      specialize @h x
+      have h₁ : 1 < v' x := not_le.mp h₀
+      have h₂ : 1 < v x := h.mpr h₁
+      apply (not_le.mpr h₂)
+      exact h'
+    · intro h'
+      by_contra h₀
+      specialize @h x
+      have h₁ : 1 < v x := not_le.mp h₀
+      have h₂ : 1 < v' x := h.mp h₁
+      apply (not_le.mpr h₂)
+      exact h'
+
+
+theorem Valuation.map_Intpow {K : Type u_3} [Field K]
+(v : Valuation K NNReal) (x : K)  (m : ℤ) :
+v (x ^ m) = (v x) ^ m := by
+  cases m with 
+    | ofNat a => sorry
+    | negSucc m => sorry
 
 
 theorem RatSeqAboveTendsto (b : ℝ) : ∃ a : ℕ → ℚ, (∀ n, (b : ℝ) < a n) ∧ Tendsto (fun n ↦ (a n : ℝ)) atTop (nhds b) := by
@@ -63,19 +106,6 @@ theorem RatSeqBelowTendsto (b : ℝ) : ∃ a : ℕ → ℚ, (∀ n, (b : ℝ) > 
   · exact fun n ↦ (hr n).le
   · exact fun n ↦ (hr' n).le
 
-
-theorem Valuation.div_le_one {K : Type u_3} [inst : Field K] 
-(v : Valuation K NNReal) {x y : K} (h₀ : y ≠ 0) 
-(h : v (x / y) < 1): v x < v y := by
-  have hxy₁ : v (x / y) * v y = v x := by
-    simp only [map_div₀, ne_eq, map_eq_zero]
-    have this : v y ≠ 0 := Iff.mpr (ne_zero_iff v) h₀
-    exact div_mul_cancel (v x) this
-  rw [←hxy₁]
-  have this' : 0 < v y := by
-    have this : v y ≠ 0 := (Valuation.ne_zero_iff v).mpr h₀
-    exact Iff.mpr zero_lt_iff this
-  exact mul_lt_of_lt_one_left this' h
 
 theorem Valuation.div_le_one_iff {K : Type u_3} [inst : Field K] 
 (v : Valuation K NNReal) {x y : K} (h₀ : y ≠ 0) :
@@ -162,6 +192,25 @@ theorem nPow {a b : ℝ} {m : ℤ} {n : ℕ} (hn : n > 0) (ha: 0 ≤ a)
   exact this
 
 
+
+theorem nPow' {a b : ℝ} {m : ℤ} {n : ℕ} (hn : n > 0) (ha: 0 ≤ a) 
+(hb : 0 ≤ b) (h : a > b ^ (m / n)) : 
+  a ^ n > b ^ m := by 
+  let s := @HPow.hPow ℝ ℕ ℝ _ a n 
+  let t := @HPow.hPow ℝ ℕ ℝ _ (b ^ (m / n)) n  
+  have hb' : 0 ≤ b ^ (m / n) := rpow_nonneg_of_nonneg hb (m / n) 
+  have this : s > t := pow_lt_pow_of_lt_left h hb' hn
+  have hs : s = a ^ n := Eq.symm (rpow_nat_cast a n)
+  have ht : t = (b ^ (m / n)) ^ n := Eq.symm (rpow_nat_cast (b ^ (m / n)) n)
+  rw [hs, ht, ←(Real.rpow_mul hb (m / n) (n))] at this
+  have hn₁ : (n : ℝ) ≠ 0 := by 
+    have hn₂ : n ≠ 0 := Iff.mp Nat.pos_iff_ne_zero hn 
+    exact Iff.mpr Nat.cast_ne_zero hn₂
+  rw [(div_mul_cancel (m : ℝ) hn₁)] at this
+  exact this
+
+
+
 theorem rPowAt {a : ℝ} (ha : 1 < a) {α : ℝ}:
 ContinuousAt (fun (x : ℝ) ↦ a ^ x) α := by
   let f := fun (x : ℝ) ↦ a
@@ -204,6 +253,109 @@ theorem ExistPow {K : Type _} [Field K] (v₁ : Valuation K NNReal) {y : K} (hy 
   exact Eq.symm ((mul_log_eq_log_iff this₂ this₁).mp this₃)
 
 
+theorem InequalityTrans.one {K : Type _} [Field K] (v₁: Valuation K NNReal) {a : ℕ → ℚ}
+{x y : K} (hy : v₁ y > 1 ) 
+(hv₁ : ∀ (i : ℕ), v₁ x < ((v₁ y): ℝ) ^ (((a i).num : ℚ) / ((a i).den :ℚ)))
+: ∀ (i : ℕ), v₁ ((x ^ (a i).den) / (y ^ (a i).num)) < 1 := by
+  intro i
+  specialize @hv₁ i
+  have hv₁' : ((v₁ x): ℝ) ^ ((a i).den) < ((v₁ y): ℝ) ^ (((a i).num)) := by
+    have hvxpos : 0 ≤ ((v₁ x): ℝ) := NNReal.coe_nonneg (v₁ x)
+    have hvypos : 0 ≤ ((v₁ y): ℝ) := NNReal.coe_nonneg (v₁ y)
+    have denpos : 0 < (a i).den := Rat.pos (a i)
+    exact nPow denpos hvxpos hvypos hv₁
+  let s:= @HPow.hPow NNReal ℕ NNReal _ (v₁ x) (a i).den
+  let t:= @HPow.hPow NNReal ℤ NNReal _ (v₁ y) (a i).num
+  let s' := @HPow.hPow ℝ ℕ ℝ  _ (v₁ x) (a i).den  
+  let t' := @HPow.hPow ℝ ℤ ℝ  _ (v₁ y) (a i).num
+  have seq'' : ((v₁ x)) ^ ((a i).den)= s'  := rpow_nat_cast ((v₁ x): ℝ) (a i).den
+  have teq'' : ((v₁ y): ℝ) ^ (((a i).num)) = t' := rpow_int_cast ((v₁ y): ℝ) (a i).num
+  have seq' : s = s' := rfl
+  have teq' : t = t' := rfl
+  rw [seq'', teq'', ←seq', ←teq'] at hv₁'
+  have hyneqzero : (y ^ (a i).num) ≠ 0 := by
+    have hvy : (v₁ y) ≠ 0 := gtonenezero hy
+    have this' : y ≠ 0 := (Valuation.ne_zero_iff v₁).mp hvy
+    exact zpow_ne_zero (a i).num this'
+  apply (Valuation.div_le_one_iff v₁ hyneqzero).mpr
+  rw [(Valuation.map_pow v₁ x (a i).den), (Valuation.map_Intpow v₁ y (a i).num)]
+  exact hv₁'
+
+
+
+theorem InequalityTrans.one' {K : Type _} [Field K] (v₁: Valuation K NNReal) {a : ℕ → ℚ}
+{x y : K} (hy : v₁ y > 1 ) 
+(hv₁ : ∀ (i : ℕ), v₁ x > ((v₁ y): ℝ) ^ (((a i).num : ℚ) / ((a i).den :ℚ)))
+: ∀ (i : ℕ), v₁ ((x ^ (a i).den) / (y ^ (a i).num)) > 1 := by
+  intro i
+  specialize @hv₁ i
+  have hv₁' : ((v₁ x): ℝ) ^ ((a i).den) > ((v₁ y): ℝ) ^ (((a i).num)) := by
+    have hvxpos : 0 ≤ ((v₁ x): ℝ) := NNReal.coe_nonneg (v₁ x)
+    have hvypos : 0 ≤ ((v₁ y): ℝ) := NNReal.coe_nonneg (v₁ y)
+    have denpos : 0 < (a i).den := Rat.pos (a i)
+    exact nPow' denpos hvxpos hvypos hv₁
+  let s:= @HPow.hPow NNReal ℕ NNReal _ (v₁ x) (a i).den
+  let t:= @HPow.hPow NNReal ℤ NNReal _ (v₁ y) (a i).num
+  let s' := @HPow.hPow ℝ ℕ ℝ  _ (v₁ x) (a i).den  
+  let t' := @HPow.hPow ℝ ℤ ℝ  _ (v₁ y) (a i).num
+  have seq'' : ((v₁ x)) ^ ((a i).den)= s'  := rpow_nat_cast ((v₁ x): ℝ) (a i).den
+  have teq'' : ((v₁ y): ℝ) ^ (((a i).num)) = t' := rpow_int_cast ((v₁ y): ℝ) (a i).num
+  have seq' : s = s' := rfl
+  have teq' : t = t' := rfl
+  rw [seq'', teq'', ←seq', ←teq'] at hv₁'
+  have hyneqzero : (y ^ (a i).num) ≠ 0 := by
+    have hvy : (v₁ y) ≠ 0 := gtonenezero hy
+    have this' : y ≠ 0 := (Valuation.ne_zero_iff v₁).mp hvy
+    exact zpow_ne_zero (a i).num this'
+  apply (Valuation.div_ge_one_iff v₁ hyneqzero).mpr
+  rw [(Valuation.map_pow v₁ x (a i).den), (Valuation.map_Intpow v₁ y (a i).num)]
+  exact hv₁'
+
+
+theorem InequalityTrans'.one {K : Type _} [Field K] (v₂: Valuation K NNReal) {a : ℕ → ℚ}
+{x y : K} 
+(hxa₅ : ∀ (i : ℕ), v₂ x ^ (a i).den < v₂ y ^ (a i).num) 
+: ∀ (i : ℕ), v₂ x < ((v₂ y): ℝ) ^ (((a i).num: ℚ) / ((a i).den : ℚ)) := by
+  intro i
+  specialize @hxa₅ i
+  have hvxpos : 0 ≤ ((v₂ x): ℝ) := NNReal.coe_nonneg (v₂ x)
+  have hvypos : 0 ≤ ((v₂ y): ℝ) := NNReal.coe_nonneg (v₂ y)
+  have hvypos' : 0 ≤ ((v₂ y): ℝ) ^ (((a i).num: ℚ) / ((a i).den : ℚ)) := rpow_nonneg_of_nonneg hvypos (((a i).num : ℝ)/ ((a i).den : ℝ))
+  have denpos : 0 < (a i).den := Rat.pos (a i)
+  have denpos' : 0 < ((a i).den : ℝ) := Iff.mpr Nat.cast_pos denpos
+  have dennezero : ((a i).den : ℝ) ≠ 0  := ne_of_gt denpos'
+  apply (Real.rpow_lt_rpow_iff hvxpos hvypos' denpos').mp
+  rw [←(Real.rpow_mul hvypos ((((a i).num: ℚ) : ℝ) / (((a i).den: ℚ) : ℝ)) ((a i).den : ℝ))]
+  simp
+  rw [div_mul_cancel ((a i).num: ℝ) dennezero]
+  let s := @HPow.hPow ℝ ℤ ℝ _ (v₂ y) (a i).num
+  have this : ((v₂ y): ℝ) ^ (((a i).num)) = s := rpow_int_cast ((v₂ y): ℝ) (a i).num
+  rw [this]
+  exact hxa₅
+
+
+theorem InequalityTrans'.one' {K : Type _} [Field K] (v₂: Valuation K NNReal) {a : ℕ → ℚ}
+{x y : K} 
+(hxa₅ : ∀ (i : ℕ), v₂ x ^ (a i).den > v₂ y ^ (a i).num) 
+: ∀ (i : ℕ), v₂ x > ((v₂ y): ℝ) ^ (((a i).num: ℚ) / ((a i).den : ℚ)) := by
+  intro i
+  specialize @hxa₅ i
+  have hvxpos : 0 ≤ ((v₂ x): ℝ) := NNReal.coe_nonneg (v₂ x)
+  have hvypos : 0 ≤ ((v₂ y): ℝ) := NNReal.coe_nonneg (v₂ y)
+  have hvypos' : 0 ≤ ((v₂ y): ℝ) ^ (((a i).num: ℚ) / ((a i).den : ℚ)) := rpow_nonneg_of_nonneg hvypos (((a i).num : ℝ)/ ((a i).den : ℝ))
+  have denpos : 0 < (a i).den := Rat.pos (a i)
+  have denpos' : 0 < ((a i).den : ℝ) := Iff.mpr Nat.cast_pos denpos
+  have dennezero : ((a i).den : ℝ) ≠ 0  := ne_of_gt denpos'
+  apply (Real.rpow_lt_rpow_iff hvypos' hvxpos denpos').mp
+  rw [←(Real.rpow_mul hvypos ((((a i).num: ℚ) : ℝ) / (((a i).den: ℚ) : ℝ)) ((a i).den : ℝ))]
+  simp
+  rw [div_mul_cancel ((a i).num: ℝ) dennezero]
+  let s := @HPow.hPow ℝ ℤ ℝ _ (v₂ y) (a i).num
+  have this : ((v₂ y): ℝ) ^ (((a i).num)) = s := rpow_int_cast ((v₂ y): ℝ) (a i).num
+  rw [this]
+  exact hxa₅
+
+
 theorem ExistSeqAbove (v₁: Valuation K NNReal) 
 (v₂ : Valuation K NNReal) {x y : K} (hy :  v₁ y > 1)
 (h : Valuation.IsEquiv v₁ v₂) {α : ℝ} (hx₁ : v₁ x = (v₁ y) ^ α)
@@ -223,7 +375,7 @@ theorem ExistSeqAbove (v₁: Valuation K NNReal)
       exact congrArg Rat.cast this
     rw [this']
     exact (hxa i)
-  have hxa₂ : ∀ (i : ℕ), v₁ ((x ^ (a i).den) / (y ^ (a i).num)) < 1 := sorry
+  have hxa₂ : ∀ (i : ℕ), v₁ ((x ^ (a i).den) / (y ^ (a i).num)) < 1 := InequalityTrans.one v₁ hy hv₁ 
   have hv₂ : ∀ (i : ℕ), v₂ x < ((v₂ y): ℝ) ^ (((a i).num: ℚ) / ((a i).den : ℚ)) := by
     have hxa₃ : ∀ (i : ℕ), v₂ ((x ^ (a i).den) / (y ^ (a i).num)) < 1 := 
       fun i => ((Valuation.isEquiv_iff_val_lt_one v₁ v₂).mp h).mp (hxa₂ i)
@@ -234,10 +386,12 @@ theorem ExistSeqAbove (v₁: Valuation K NNReal)
         have this' : y ≠ 0 := (Valuation.ne_zero_iff v₁).mp hvy
         exact zpow_ne_zero (a i).num this'
       exact (Valuation.div_le_one_iff v₂ this).mp (hxa₃ i)
-    have hxa₅ : ∀ (i : ℕ), (v₂ x) ^ ((a i).den) < (v₂ y) ^ ((a i).den) := sorry
-    intro i
-    specialize @hxa₅ i
-    sorry -- 1/n pow on both side
+    have hxa₅ : ∀ (i : ℕ), (v₂ x) ^ ((a i).den) < (v₂ y) ^ ((a i).num) := by
+      intro i
+      specialize @hxa₄ i
+      rw [←(Valuation.map_pow v₂ x (a i).den), ←(Valuation.map_Intpow v₂ y (a i).num)]
+      exact hxa₄
+    exact InequalityTrans'.one v₂ hxa₅-- 1/n pow on both side
   have hv₂' : ∀ (i : ℕ), v₂ x < ((v₂ y): ℝ) ^ (a i) := by
     intro i
     have this : (a i).num / (a i).den  = a i := Rat.num_div_den (a i)
@@ -278,7 +432,7 @@ theorem ExistSeqBelow (v₁: Valuation K NNReal)
       exact congrArg Rat.cast this
     rw [this']
     exact (hxa i)
-  have hxa₂ : ∀ (i : ℕ), v₁ ((x ^ (a i).den) / (y ^ (a i).num)) > 1 := sorry
+  have hxa₂ : ∀ (i : ℕ), v₁ ((x ^ (a i).den) / (y ^ (a i).num)) > 1 := InequalityTrans.one' v₁ hy hv₁ 
   have hv₂ : ∀ (i : ℕ), v₂ x > ((v₂ y): ℝ) ^ (((a i).num: ℚ) / ((a i).den : ℚ)) := by
     have hxa₃ : ∀ (i : ℕ), v₂ ((x ^ (a i).den) / (y ^ (a i).num)) > 1 := 
       fun i => ((Valuation.isEquiv_iff_val_gt_one v₁ v₂).mp h).mp (hxa₂ i)
@@ -289,10 +443,12 @@ theorem ExistSeqBelow (v₁: Valuation K NNReal)
         have this' : y ≠ 0 := (Valuation.ne_zero_iff v₁).mp hvy
         exact zpow_ne_zero (a i).num this'
       exact (Valuation.div_ge_one_iff v₂ this).mp (hxa₃ i)
-    have hxa₅ : ∀ (i : ℕ), (v₂ x) ^ ((a i).den) > (v₂ y) ^ ((a i).den) := sorry
-    intro i
-    specialize @hxa₅ i
-    sorry
+    have hxa₅ : ∀ (i : ℕ), (v₂ x) ^ ((a i).den) > (v₂ y) ^ ((a i).num) := by
+      intro i
+      specialize @hxa₄ i
+      rw [←(Valuation.map_pow v₂ x (a i).den), ←(Valuation.map_Intpow v₂ y (a i).num)]
+      exact hxa₄
+    exact InequalityTrans'.one' v₂ hxa₅
   have hv₂' : ∀ (i : ℕ), v₂ x > ((v₂ y): ℝ) ^ (a i) := by
     intro i
     have this : (a i).num / (a i).den  = a i := Rat.num_div_den (a i)
