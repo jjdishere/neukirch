@@ -180,6 +180,29 @@ ContinuousAt (fun (x : ℝ) ↦ a ^ x) α := by
     exact neq₂ neq₁
   exact ContinuousAt.rpow hf' hg' this
 
+theorem ExistPow {K : Type _} [Field K] (v₁ : Valuation K NNReal) {y : K} (hy : v₁ y > 1 ) 
+: ∀ (x : K) (hx : x ≠ 0), ∃ (α : ℝ), v₁ x = (v₁ y) ^ α  := by
+  intro x hx
+  have this : v₁ x ≠ 0 := (Valuation.ne_zero_iff v₁).mpr hx
+  let α := Real.log (v₁ x) / Real.log (v₁ y)
+  use α 
+  have this₁ : 0 < v₁ x := Iff.mpr zero_lt_iff this
+  have this₂ : 0 < (v₁ y)  := lt_trans one_pos hy
+  have this₃ : α * Real.log (v₁ y) = Real.log (v₁ x) := by
+    have neqzero : Real.log (v₁ y) ≠ 0 := by 
+      have hyneone₁ : ((v₁ y): ℝ) ≠ 1 :=  ne_of_gt hy
+      have hyneone₂ : ((v₁ y): ℝ) ≠ 0 := ne_of_gt this₂
+      have hyneone₃ : ((v₁ y): ℝ) ≠ -1 := by 
+        intro h
+        have hyneg : (-1 : ℝ) < 0 := by exact neg_one_lt_zero
+        rw [←h] at hyneg
+        have hynneg : ¬ ((v₁ y): ℝ) ≤ 0 := not_le.mpr this₂
+        apply hynneg
+        exact le_of_lt hyneg
+      exact Real.log_ne_zero.mpr ⟨hyneone₂, hyneone₁, hyneone₃⟩ 
+    exact (div_mul_cancel (Real.log (v₁ x)) neqzero)
+  exact Eq.symm ((mul_log_eq_log_iff this₂ this₁).mp this₃)
+
 
 theorem ExistSeqAbove (v₁: Valuation K NNReal) 
 (v₂ : Valuation K NNReal) {x y : K} (hy :  v₁ y > 1)
@@ -303,7 +326,7 @@ Valuation.IsEquiv v₁ v₂ ↔ ∃ (s : ℝ) (hs : s > 0), ∀ {x : K}, v₁ x 
       use y
     have hxy : ∀ (x : K) (hx₀ : x ≠ 0), ∃ (α : ℝ), 
     ((v₁ x = (v₁ y) ^ α) ∧ v₂ x = (v₂ y) ^ α) := by 
-      have hx : ∀ (x : K) (hx₀ : x ≠ 0), ∃ (α : ℝ), v₁ x = (v₁ y) ^ α := sorry
+      have hx : ∀ (x : K) (hx₀ : x ≠ 0), ∃ (α : ℝ), v₁ x = (v₁ y) ^ α := ExistPow v₁ hy
       intro x xneqzero
       specialize @hx x xneqzero
       rcases hx with ⟨α, hx₁⟩
