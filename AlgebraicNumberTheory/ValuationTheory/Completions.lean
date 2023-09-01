@@ -192,4 +192,6 @@ theorem hensel_lemma [Field F1] {Γ : Type _} {hp : Type _}
 : 
    ℕ 
   := sorry
- 
+
+
+
