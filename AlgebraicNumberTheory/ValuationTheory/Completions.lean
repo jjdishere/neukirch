@@ -1,7 +1,9 @@
-import Mathlib.NumberTheory.Padics.PadicNorm
+/-
+Copyright (c) 2023 Zou Wenrong. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Zou Wenrong
+-/
 import Mathlib.NumberTheory.Padics.PadicIntegers
-import Mathlib.NumberTheory.Padics.PadicVal
-import Mathlib.NumberTheory.Padics.PadicNumbers
 import Mathlib.Topology.MetricSpace.Completion
 import Mathlib.Algebra.Order.Archimedean
 import Mathlib.Analysis.Normed.Field.Basic
@@ -9,23 +11,16 @@ import Mathlib.Topology.UniformSpace.Cauchy
 import Mathlib.Tactic
 import Mathlib.Algebra.Order.Group.Abs
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
-import Mathlib.Tactic.Positivity
 import Mathlib.Topology.Algebra.Order.Compact
-import Mathlib.Topology.MetricSpace.EMetricSpace
 import Mathlib.Topology.Bornology.Constructions
-import Mathlib.Topology.UniformSpace.Completion
 import Mathlib.RingTheory.Valuation.ValuationRing
-import Mathlib.RingTheory.Ideal.LocalRing
-import Mathlib.Algebra.Ring.Defs
 import Mathlib.RingTheory.Valuation.Integers
 import Mathlib.RingTheory.Ideal.LocalRing
 import Mathlib.RingTheory.Localization.FractionRing
 import Mathlib.RingTheory.Localization.Integer
 import Mathlib.RingTheory.DiscreteValuationRing.Basic
 import Mathlib.RingTheory.Bezout
-import Mathlib.Tactic.FieldSimp
 import Mathlib.Algebra.Algebra.Basic
-import Mathlib.RingTheory.Localization.FractionRing
 import Mathlib.Topology.Algebra.ValuedField
 import Mathlib.Algebra.Algebra.Subalgebra.Basic
 import Mathlib.Data.Real.Basic
@@ -192,6 +187,47 @@ theorem hensel_lemma [Field F1] {Γ : Type _} {hp : Type _}
 : 
    ℕ 
   := sorry
+
+
+
+
+noncomputable instance Valuation.toUniformSpace {K : Type _} [DivisionRing K] (v : Valuation K NNReal)
+: UniformSpace K := by 
+  have hv : Valued K NNReal := Valued.mk' v
+  exact Valued.toUniformSpace
+
+noncomputable instance Valuation.toTopologicalSpace {K : Type _} [DivisionRing K] (v : Valuation K NNReal)
+: TopologicalSpace K := by
+  have hv : Valued K NNReal := Valued.mk' v
+  exact UniformSpace.toTopologicalSpace
+
+def IsCompleteWithValuation {K : Type _} [DivisionRing K] (v : Valuation K NNReal)
+ : Prop := ∀ {f : Filter K}, @Cauchy K (Valuation.toUniformSpace v) f → ∃ x, f ≤ @nhds K (Valuation.toTopologicalSpace v) x 
+
+
+def ValuationFinExt {K : Type _} {L : Type _} [Field K] [Field L]
+(v : Valuation K NNReal) (h : IsCompleteWithValuation v) 
+[Algebra K L] [FiniteDimensional K L]
+: Valuation L NNReal where
+  toFun := fun α ↦ ((v.toFun ((Algebra.norm K) α) : NNReal) ^ (1 / ((FiniteDimensional.finrank K L) : ℝ)) : NNReal)
+  map_zero' := by 
+    have : 0 < FiniteDimensional.finrank K L := FiniteDimensional.finrank_pos
+    have this' : (0 : ℝ) < FiniteDimensional.finrank K L := Nat.cast_pos.mpr this
+    have h' : (0 : ℝ) < 1 / FiniteDimensional.finrank K L := one_div_pos.mpr this'
+  map_one' := _
+  map_mul' := _
+  map_add_le_max' := _
+
+
+theorem Valuation.Extension {K : Type _} {L : Type _} [Field K] [Field L]
+(v : Valuation K NNReal) (h : IsCompleteWithValuation v) 
+[Algebra K L] [FiniteDimensional K L]
+: ∃! (v' : Valuation L NNReal), ∀ (α : L), v' α = (v ((Algebra.norm K) α)) ^ (1 / ((FiniteDimensional.finrank K L) : ℝ) ) 
+:= by
+  let 𝓸 := Valuation.integer v
+  let 𝓞 := integralClosure 𝓸 L
+  have intclosure : 𝓞 = {x // ((@Algebra.norm K L) x) ∈ 𝓸 } := sorry
+  sorry
 
 
 

@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2023 Zou Wenrong. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Zou Wenrong
+-/
 import Mathlib.Topology.Algebra.ValuedField
 import Mathlib.Analysis.Normed.Field.Basic
 import Mathlib.Logic.Equiv.Defs
@@ -74,12 +79,14 @@ v.IsEquiv v' ↔ ∀ {x : K}, v x > 1 ↔ v' x > 1 where
       exact h'
 
 
-theorem Valuation.map_Intpow {K : Type u_3} [Field K]
+theorem Valuation.map_Intpow {K : Type u_3} [DivisionRing K]
 (v : Valuation K NNReal) (x : K)  (m : ℤ) :
 v (x ^ m) = (v x) ^ m := by
   cases m with 
-    | ofNat a => sorry
-    | negSucc m => sorry
+    | ofNat a => 
+      simp only [Int.ofNat_eq_coe, zpow_coe_nat, _root_.map_pow]
+    | negSucc m => 
+      simp only [zpow_negSucc, map_inv₀, _root_.map_pow]
 
 
 theorem RatSeqAboveTendsto (b : ℝ) : ∃ a : ℕ → ℚ, (∀ n, (b : ℝ) < a n) ∧ Tendsto (fun n ↦ (a n : ℝ)) atTop (nhds b) := by

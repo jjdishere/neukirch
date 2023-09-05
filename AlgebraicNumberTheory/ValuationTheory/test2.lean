@@ -35,3 +35,4 @@ theorem Valuation.div_le_one {K : Type u_3} [inst : Field K]
     exact Iff.mpr zero_lt_iff this
   exact mul_lt_of_lt_one_left this' h
 
+theorem th1 {a b : NNReal} (h : (a : ℝ) < (b : ℝ)) : a < b := by apply? 
