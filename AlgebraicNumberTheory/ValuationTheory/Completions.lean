@@ -205,18 +205,33 @@ def IsCompleteWithValuation {K : Type _} [DivisionRing K] (v : Valuation K NNRea
  : Prop := ∀ {f : Filter K}, @Cauchy K (Valuation.toUniformSpace v) f → ∃ x, f ≤ @nhds K (Valuation.toTopologicalSpace v) x 
 
 
+noncomputable def ValExt {K : Type _} {L : Type _} [Field K] [Field L]
+(v : Valuation K NNReal)
+[Algebra K L] [FiniteDimensional K L] (α : L) : NNReal := (@HPow.hPow NNReal ℝ NNReal _ (v ((Algebra.norm K) α) : NNReal) ((1:ℝ) / (FiniteDimensional.finrank K L)))
+
+theorem ValuationFinExt.map_mul {K : Type _} {L : Type _} [Field K] [Field L]
+(v : Valuation K NNReal) (h : IsCompleteWithValuation v) 
+[Algebra K L] [FiniteDimensional K L]
+: ∀ (x y : L),
+  (v ((Algebra.norm K) x) * v (↑(Algebra.norm K) y)) ^ (↑(FiniteDimensional.finrank K L))⁻¹ =
+    ↑v (↑(Algebra.norm K) x) ^ (↑(FiniteDimensional.finrank K L))⁻¹ *
+      ↑v (↑(Algebra.norm K) y) ^ (↑(FiniteDimensional.finrank K L))⁻¹
+
 def ValuationFinExt {K : Type _} {L : Type _} [Field K] [Field L]
 (v : Valuation K NNReal) (h : IsCompleteWithValuation v) 
 [Algebra K L] [FiniteDimensional K L]
 : Valuation L NNReal where
-  toFun := fun α ↦ ((v.toFun ((Algebra.norm K) α) : NNReal) ^ (1 / ((FiniteDimensional.finrank K L) : ℝ)) : NNReal)
+  toFun := fun α ↦ ValExt v α 
   map_zero' := by 
     have : 0 < FiniteDimensional.finrank K L := FiniteDimensional.finrank_pos
-    have this' : (0 : ℝ) < FiniteDimensional.finrank K L := Nat.cast_pos.mpr this
-    have h' : (0 : ℝ) < 1 / FiniteDimensional.finrank K L := one_div_pos.mpr this'
-  map_one' := _
-  map_mul' := _
-  map_add_le_max' := _
+    have this': ¬FiniteDimensional.finrank K L = 0 := Nat.pos_iff_ne_zero.mp this
+    simp only [Algebra.norm_zero, map_zero, one_div, ne_eq, inv_eq_zero, Nat.cast_eq_zero, this', not_false_eq_true,
+      NNReal.zero_rpow, ValExt]
+  map_one' := by simp only [ValExt, map_one, one_div, NNReal.one_rpow]
+  map_mul' := by 
+    simp only [map_mul, one_div]
+    sorry
+  map_add_le_max' := sorry
 
 
 theorem Valuation.Extension {K : Type _} {L : Type _} [Field K] [Field L]

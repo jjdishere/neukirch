@@ -22,6 +22,7 @@ import Mathlib.Tactic
 import Mathlib.RingTheory.Valuation.ValuationSubring
 import Mathlib.Topology.Order.Basic
 import Mathlib.Analysis.SpecialFunctions.Pow.Continuity
+import Mathlib.Data.Nat.Factorization.Basic
 
 open Classical
 set_option maxHeartbeats 300000
@@ -483,10 +484,7 @@ theorem isEquiv_iff_pow_eq (v₁: Valuation K NNReal)
 Valuation.IsEquiv v₁ v₂ ↔ ∃ (s : ℝ) (hs : s > 0), ∀ {x : K}, v₁ x = (v₂ x) ^ s where
   mp := by
     intro h
-    have h₁ : ∀ {x : K}, v₁ x < 1 ↔ v₂ x < 1 := (Valuation.isEquiv_iff_val_lt_one v₁ v₂).mp h
     rcases h₀ with ⟨y, hy⟩
-    have h₀ : ∃ (y : K), v₁ y > 1 := by
-      use y
     have hxy : ∀ (x : K) (hx₀ : x ≠ 0), ∃ (α : ℝ), 
     ((v₁ x = (v₁ y) ^ α) ∧ v₂ x = (v₂ y) ^ α) := by 
       have hx : ∀ (x : K) (hx₀ : x ≠ 0), ∃ (α : ℝ), v₁ x = (v₁ y) ^ α := ExistPow v₁ hy
@@ -612,8 +610,8 @@ section
 
 variable {p : ℕ} [hp : Fact p.Prime]
 
-def pNorm (p : ℕ) (q : ℚ) : NNRat :=
-  if q = 0 then 0 else (p : NNRat) ^ (-padicValRat p q)
+noncomputable def pNorm (p : ℕ) (q : ℚ) : NNReal :=
+  if q = 0 then 0 else (p : NNReal) ^ (-padicValRat p q)
 
 theorem padicNorm'.mul (q r : ℚ): pNorm p (q * r) = (pNorm p q) *
 (pNorm p r) :=
@@ -623,9 +621,10 @@ if hq : q = 0 then by
   else
     if hr : r = 0 then by simp [pNorm, hr]
     else by
-      have : (p : NNRat) ≠ 0 := by simp [pNorm, hp.1.ne_zero]
+      have : (p : NNReal) ≠ 0 := by simp [pNorm, hp.1.ne_zero]
       unfold pNorm
       simp [*, padicValRat.mul, zpow_add₀ this, mul_comm]
+
 
 
 theorem padicMap_add_le_max (x y : ℚ) :
@@ -651,7 +650,7 @@ pNorm p (x + y) ≤ pNorm p x ∨ pNorm p (x + y) ≤ pNorm p y :=
             padicValRat.le_padicValRat_add_of_le hxy hxx
             have hxx'' : - padicValRat p (x + y) ≤ - padicValRat p x := 
             neg_le_neg hxx'
-            have hp' : (1 : NNRat) ≤ p := by
+            have hp' : (1 : NNReal) ≤ p := by
               have hp₂ : p ≠ 0 := by simp [hp.1.ne_zero]
               have hp₃ : 1 ≤ p := by exact Iff.mpr Nat.one_le_iff_ne_zero hp₂
               exact Iff.mpr Nat.one_le_cast hp₃
@@ -671,19 +670,19 @@ pNorm p (x + y) ≤ pNorm p x ∨ pNorm p (x + y) ≤ pNorm p y :=
               have hyy''' : - padicValRat p (x + y) ≤ - padicValRat p y := by
                 rw [add_comm]
                 exact hyy''
-              have hp' : (1 : NNRat) ≤ p := by
+              have hp' : (1 : NNReal) ≤ p := by
                 have hp₂ : p ≠ 0 := by simp [hp.1.ne_zero]
                 have hp₃ : 1 ≤ p := by exact Iff.mpr Nat.one_le_iff_ne_zero hp₂
                 exact Iff.mpr Nat.one_le_cast hp₃
               exact zpow_le_of_le hp' hyy'''
 
 
-
+open Real
         
 
-def padicNorm' {p : ℕ}  [hp : Fact (Nat.Prime p)] 
+noncomputable def padicNorm' {p : ℕ}  [hp : Fact (Nat.Prime p)] 
   :
-  Valuation ℚ NNRat where
+  Valuation ℚ NNReal where
     toFun := fun q ↦ pNorm p q
     map_zero' := by simp only [pNorm, padicValRat.zero, neg_zero, zpow_zero, ite_true]
     map_one' := by simp only [pNorm, padicValRat.one, neg_zero, zpow_zero, ite_false]
@@ -695,14 +694,150 @@ theorem ValuEquiZtoQ
  ∀ {x : ℚ}, v x = 1 ↔ v' x = 1
  := sorry
 
-theorem ValuationOfRat (v : Valuation ℚ NNRat)
+theorem ValuationEqual (v : Valuation ℚ NNReal) {q : ℕ} (hq: Nat.Prime q)
+(h : ∀ (n : ℕ) (hn : ¬ n = 0), v n = (v q) ^ (padicValRat q n))
+: ∀ (n : ℕ) (hn : ¬ n = 0), v n = ((@padicNorm' q (fact_iff.mpr hq)) n) ^ (- log (v q) / log q)
+:= by
+  intro n hn
+  specialize @h n hn
+  rw [h]
+  have this' : (@padicNorm' q (fact_iff.mpr hq)).toFun n = (q : NNReal) ^ (- padicValRat q n) := by
+    unfold padicNorm'
+    simp [pNorm, *]
+  have this'' : (@padicNorm' q (fact_iff.mpr hq)) n = (@padicNorm' q (fact_iff.mpr hq)).toFun n := by rfl
+  rw [this'', this']
+  apply Eq.symm
+  have hq₀ : 0 ≤ (q : ℝ) := Nat.cast_nonneg q
+  have eq₁ : ((q : NNReal) ^ ((- padicValRat q n) : ℝ)) = @HPow.hPow NNReal ℤ NNReal _ q (- (@Nat.cast ℤ instNatCastInt (padicValNat q n) )) := by
+    simp only [NNReal.coe_nat_cast, padicValRat.of_nat, Int.cast_ofNat, zpow_neg, zpow_coe_nat, NNReal.coe_inv, NNReal.coe_pow]
+    rw [←zpow_coe_nat (q : ℝ) (padicValNat q n), ←zpow_neg (q : ℝ) (padicValNat q n)]
+    simp [Real.rpow_int_cast]
+    rw [←(Real.rpow_nat_cast q (padicValNat q n))]
+    exact Real.rpow_neg hq₀ ((padicValNat q n) : ℝ)
+  simp only [padicValRat.of_nat, zpow_coe_nat, NNReal.coe_inv, NNReal.coe_pow, NNReal.coe_nat_cast]
+  rw [←eq₁]
+  simp only [NNReal.coe_nat_cast]
+  rw [←(@rpow_mul q hq₀ (- padicValRat q n) (- log (v q) / log q)), neg_div (log q) (log (v q)), neg_mul_neg (padicValRat q n : ℝ) (log (v q) / log q)]
+  simp only [padicValRat.of_nat, Int.cast_ofNat]
+  let t₁ := ((padicValNat q n) : ℝ) * ((log (v q)) / (log q))
+  have teq₁ : ((padicValNat q n) : ℝ) * ((log (v q)) / (log q)) = t₁ := rfl
+  rw [teq₁]
+  let s₁ := @HPow.hPow ℝ ℕ ℝ _ (v q) (padicValNat q n)
+  have seq₁ : @HPow.hPow ℝ ℕ ℝ _ (v q) (padicValNat q n) = s₁ := rfl
+  rw [seq₁]
+  have hq₁ : 0 < (q : ℝ) := by
+    have qpos : 0 < q := Nat.Prime.pos hq
+    exact Iff.mpr Nat.cast_pos qpos
+  have vqnezero : v q ≠ 0 := by
+      have qnezero : q ≠ 0 := by simp [((fact_iff.mpr hq)).1.ne_zero]
+      have qnezero' : (q : ℚ) ≠ 0 := Iff.mpr Nat.cast_ne_zero qnezero
+      exact (Valuation.ne_zero_iff v).mpr qnezero'
+  have vqpos : 0 < v q := Iff.mpr zero_lt_iff vqnezero
+  have hq₂ : (0 : ℝ) < s₁ := by
+    let s₂ := @HPow.hPow NNReal ℕ NNReal _ (v q) (padicValNat q n)
+    have seq₂ : s₂ =  @HPow.hPow NNReal ℕ NNReal _ (v q) (padicValNat q n) := rfl
+    have seq₃ : s₁ = s₂ := seq₁
+    rw [seq₃, seq₂]
+    exact pow_pos vqpos (padicValNat q n)
+  apply (mul_log_eq_log_iff hq₁ hq₂).mp
+  rw [←teq₁, ←seq₁]
+  have eq₂ : log (@HPow.hPow ℝ ℕ ℝ _ (v q) (padicValNat q n)) = (padicValNat q n) * log (v q) := by 
+    apply Eq.symm
+    apply (mul_log_eq_log_iff vqpos hq₂).mpr
+    simp only [NNReal.val_eq_coe, rpow_nat_cast]
+  rw [eq₂]
+  have eq₃ : (log (v q) / log q) * log q = log (v q) := by 
+    have nezero : log q ≠ 0 := by 
+      have hyneone₁ : (q : ℝ) ≠ 1 := by simp [((fact_iff.mpr hq)).1.ne_one]
+      have hyneone₂ : (q : ℝ) ≠ 0 := by simp [((fact_iff.mpr hq)).1.ne_zero]
+      have hyneone₃ : (q : ℝ) ≠ -1 := by 
+        intro h
+        have hyneg : (-1 : ℝ) < 0 := by exact neg_one_lt_zero
+        rw [←h] at hyneg
+        have hynneg : ¬ (q : ℝ) ≤ 0 := not_le.mpr hq₁
+        apply hynneg
+        exact le_of_lt hyneg
+      exact Real.log_ne_zero.mpr ⟨hyneone₂, hyneone₁, hyneone₃⟩ 
+    exact div_mul_cancel (log (v q)) nezero
+  rw [mul_assoc, eq₃]
+
+
+theorem ValuationEqual' (v : Valuation ℚ NNReal) {s : ℝ} {q : ℕ} (hq : Nat.Prime q)
+(vformula : ∀ (n : ℕ) (hn : ¬ n = 0), v n = ((@padicNorm' q (fact_iff.mpr hq)) n) ^ s)
+: ∀ (x : ℤ) (hx : ¬ x = 0), v x = ((@padicNorm' q (fact_iff.mpr hq)) x) ^ s
+:= by 
+  intro x hx
+  cases x with 
+  | ofNat x => 
+    have : x ≠ 0 := by exact Iff.mp Int.ofNat_ne_zero hx
+    exact vformula x this
+  | negSucc x => 
+    rw [← Valuation.map_neg, ←(Valuation.map_neg (@padicNorm' q (fact_iff.mpr hq)) )]
+    simp only [Int.cast_negSucc, Nat.cast_add, Nat.cast_one, neg_add_rev, neg_neg]
+    have trivial (n : ℕ): v (↑n + 1) = v ↑(n + 1) := by 
+      have ht : ((n : ℚ) + 1) = ((n + 1) : ℚ) := rfl
+      rw [ht]
+      apply Eq.symm (FunLike.congr_arg v _)
+      exact Mathlib.Tactic.Ring.inv_add rfl rfl
+    have trivial' (n : ℕ): (@padicNorm' q (fact_iff.mpr hq)) (↑n + 1) = (@padicNorm' q (fact_iff.mpr hq)) ↑(n + 1) := by 
+      have ht : ((n : ℚ) + 1) = ((n + 1) : ℚ) := rfl
+      rw [ht]
+      apply Eq.symm (FunLike.congr_arg (@padicNorm' q (fact_iff.mpr hq)) _)
+      exact Mathlib.Tactic.Ring.inv_add rfl rfl
+    rw [trivial, trivial']
+    have : x + 1 ≠ 0 := Nat.succ_ne_zero x
+    exact vformula (x + 1) this
+
+
+theorem NatFactor {n : ℕ} (q : ℕ) (hq : Nat.Prime q) 
+: (Nat.factorization n) q = padicValNat q n
+:= by 
+  unfold Nat.factorization
+  simp
+  intro h
+  exfalso
+  exact h hq
+
+
+
+
+theorem ValuationEquation (v : Valuation ℚ NNReal) (q : ℕ) (hq : Nat.Prime q)
+ (h₁ : ∀ {m : ℕ}, ¬q ∣ m  → v m = 1)
+: ∀ (n : ℕ) (hn : ¬ n = 0), v n = (v q) ^ (padicValRat q n)
+:= by
+  intro n hn
+  let n₁ := ord_proj[q] n
+  let n₂ := ord_compl[q] n
+  have : n = n₁ * n₂ := Eq.symm (Nat.ord_proj_mul_ord_compl_eq_self n q)
+  have this' : n = (n₁ : ℚ) * (n₂ : ℚ) := by
+    rw [this]
+    simp only [Nat.cast_mul, Nat.cast_pow, Nat.isUnit_iff]
+  nth_rw 2 [this']
+  rw [(Valuation.map_mul v n₁ n₂)]    
+  have vn₂ : v n₂ = 1 := by 
+    have nediv : ¬ q ∣ n₂ := Nat.not_dvd_ord_compl hq hn
+    exact h₁ nediv
+  rw [vn₂]
+  have vn₁ : v n₁ = (v q) ^ (padicValNat q n) := by
+    have neq : n₁ = q ^ (padicValNat q n) := by
+      have eq₀ : (Nat.factorization n) q = padicValNat q n := NatFactor q hq
+      exact congrArg (Nat.pow q) eq₀
+    rw [neq]
+    have eq₁ : ((q ^ (padicValNat q n)): ℚ) = (q : ℚ) ^ (padicValNat q n) := Nat.cast_pow q (padicValNat q n)
+    rw [eq₁]
+    exact Valuation.map_pow v (q : ℚ) (padicValNat q n)
+  rw [vn₁, mul_one]
+  simp only [padicValRat.of_nat, zpow_coe_nat]
+
+
+theorem ValuationOfRat (v : Valuation ℚ NNReal)
 (existvpltone : ∃ (q : ℕ) (hq : Nat.Prime q), v q < 1):
 ∃ (q : ℕ) (hq : Nat.Prime q), Valuation.IsEquiv v (@padicNorm' q (fact_iff.mpr hq))
 := by
   have vnleone : ∀ (n : ℕ), v n ≤ 1 := by
     intro n 
     induction' n with n hn
-    have hzero : v Nat.zero = (0 : NNRat) := by simp only [Nat.zero_eq, CharP.cast_eq_zero, map_zero]
+    have hzero : v Nat.zero = (0 : NNReal) := by simp only [Nat.zero_eq, CharP.cast_eq_zero, map_zero]
     simp only [Nat.zero_eq, CharP.cast_eq_zero, map_zero, zero_le]
     rw [Nat.succ_eq_add_one]
     have hone : v 1 ≤ 1 := by
@@ -770,11 +905,98 @@ theorem ValuationOfRat (v : Valuation ℚ NNRat)
     exact Eq.symm (Ideal.IsMaximal.eq_of_le pIsmaxi anetop qZlea)
   use q 
   use hq
-  have valeqone : ∀ {x : ℤ}, v x = 1 ↔ (padicValRat q x = 0) := sorry
-  have h₁ : ∀{x : ℤ}, v x = 1 ↔ (@padicNorm' q (fact_iff.mpr hq)) x = 1 := sorry
-  have h₂ : ∀{x : ℚ}, v x = 1 ↔ (@padicNorm' q (fact_iff.mpr hq)) x = 1 := by
-    exact ValuEquiZtoQ v (@padicNorm' q (fact_iff.mpr hq)) h₁
-  exact Iff.mpr (Valuation.isEquiv_iff_val_eq_one v (@padicNorm' q (fact_iff.mpr hq))) h₂
+  have h₂ : ∃ (y : ℚ), 1 < v y := by
+    let y := (1 : ℚ) / q
+    use y
+    have nezero : (q : ℚ) ≠ 0 := by
+      have qnezero : q ≠ 0 := by simp [((fact_iff.mpr hq)).1.ne_zero]
+      exact Iff.mpr Nat.cast_ne_zero qnezero
+    have : 1 = y * q:= Eq.symm (div_mul_cancel 1 nezero)
+    have vone : 1 = (v y) * (v q) := by
+      have this' : 1 = v 1 :=Eq.symm (Valuation.map_one v)
+      rw [this', this]
+      exact Valuation.map_mul v y (q : ℚ)
+    have vypos : 0 < v y := by
+      have ynezero : y ≠ 0 := one_div_ne_zero nezero
+      have vynezero : v y ≠ 0 := Iff.mpr (Valuation.ne_zero_iff v) ynezero 
+      exact Iff.mpr zero_lt_iff vynezero
+    rw [vone]
+    exact mul_lt_of_lt_one_right vypos qltone
+  apply (isEquiv_iff_pow_eq v (@padicNorm' q (fact_iff.mpr hq)) h₂).mpr
+  let s := - log (v q) / log q
+  have hs : 0 < s := by 
+    have logvq : log (v q) < 0 := by
+      have vqpos : 0 < v q := by
+        have vqnezero : v q ≠ 0 := by
+          have qnezero : q ≠ 0 := by simp [((fact_iff.mpr hq)).1.ne_zero]
+          have qnezero' : (q : ℚ) ≠ 0 := Iff.mpr Nat.cast_ne_zero qnezero
+          exact (Valuation.ne_zero_iff v).mpr qnezero'
+        exact Iff.mpr zero_lt_iff vqnezero
+      exact Real.log_neg vqpos qltone
+    have logq : 0 < log q := by
+      have oneltq : 1 < q := Nat.Prime.one_lt hq
+      have oneltq' : (1 : ℝ) < q := Iff.mpr Nat.one_lt_cast oneltq
+      exact Real.log_pos oneltq'
+    exact div_pos (neg_pos.mpr logvq) logq
+  use s
+  use hs
+  intro x
+  have heq : ∀ {m : ℕ}, ¬q ∣ m  → v m = 1 := by
+    intro m h
+    have : (m : ℤ) ∉ qZ := by 
+      by_contra h'
+      apply h
+      have existdiv : ∃ (m' : ℤ), m' * q = m := Ideal.mem_span_singleton'.mp h'
+      rcases existdiv with ⟨m', hm⟩
+      have dvdm : (q : ℤ) ∣ (m : ℤ) := Dvd.intro_left m' hm
+      exact Iff.mp Int.ofNat_dvd dvdm
+    have this' : (m : ℤ) ∉ Ideala := by 
+      rw [IdealaIspz]
+      exact this
+    have vmgeone : 1 ≤ v m := Iff.mp not_lt this'
+    exact le_antisymm (vzleone m) vmgeone
+  have hvq : ∀ (n : ℕ) (hn : ¬ n = 0), v n = (v q) ^ (padicValRat q n) := ValuationEquation v q hq heq
+  have vformula : ∀ (n : ℕ) (hn : ¬ n = 0), v n = ((@padicNorm' q (fact_iff.mpr hq)) n) ^ s := ValuationEqual v hq hvq
+  have vformula' : ∀ (x : ℤ) (hx : ¬ x = 0), v x = ((@padicNorm' q (fact_iff.mpr hq)) x) ^ s := ValuationEqual' v hq vformula
+  by_cases hx : x = 0
+  · rw [hx, (Valuation.map_zero v), (Valuation.map_zero (@padicNorm' q (fact_iff.mpr hq)))]
+    exact Eq.symm (Real.zero_rpow (ne_of_gt hs))
+  · have xeq : v x = v (x.num / x.den) := by 
+      rw [(Rat.num_div_den x)]
+    have xeq' : v x = v (x.num) / v ((x.den: ℤ): ℚ) := by
+      rw [xeq]
+      exact map_div₀ v (x.num : ℚ) (x.den : ℚ)
+    have xpeq : (@padicNorm' q (fact_iff.mpr hq)) x = (@padicNorm' q (fact_iff.mpr hq)) (x.num / x.den) := by 
+      rw [(Rat.num_div_den x)]
+    have xpeq' : (@padicNorm' q (fact_iff.mpr hq)) x = (@padicNorm' q (fact_iff.mpr hq)) (x.num) / (@padicNorm' q (fact_iff.mpr hq)) (x.den) := by
+      rw [xpeq]
+      exact map_div₀ (@padicNorm' q (fact_iff.mpr hq)) (x.num : ℚ) (x.den : ℚ)
+    rw [xeq', xpeq']
+    have hnum : x.num ≠ 0 := Rat.num_ne_zero_of_ne_zero hx
+    have hden : (x.den :ℤ ) ≠ 0 := by 
+      have : x.den ≠ 0 := Rat.den_nz x
+      exact Int.ofNat_ne_zero.mpr this
+    have hpos₁ : 0 < (@padicNorm' q (fact_iff.mpr hq)) (x.num) / (@padicNorm' q (fact_iff.mpr hq)) (x.den) := by
+      have : (@padicNorm' q (fact_iff.mpr hq)) (x.num) / (@padicNorm' q (fact_iff.mpr hq)) (x.den) ≠ 0 := by
+        have vnez : (@padicNorm' q (fact_iff.mpr hq)) (x.num) ≠ 0 := (Valuation.ne_zero_iff _).mpr (Int.cast_ne_zero.mpr hnum)
+        have vnez' : (@padicNorm' q (fact_iff.mpr hq)) (x.den) ≠ 0 := (Valuation.ne_zero_iff _).mpr (Int.cast_ne_zero.mpr hden)
+        exact div_ne_zero vnez vnez'
+      exact Iff.mpr zero_lt_iff this
+    have hpos₂ : 0 <  v (x.num) / v (x.den) := by
+      have : v (x.num) / v (x.den) ≠ 0 := by
+        have vnez : v (x.num) ≠ 0 := (Valuation.ne_zero_iff v).mpr (Int.cast_ne_zero.mpr hnum)
+        have vnez' : v (x.den) ≠ 0 := (Valuation.ne_zero_iff v).mpr (Int.cast_ne_zero.mpr hden)
+        exact div_ne_zero vnez vnez'
+      exact Iff.mpr zero_lt_iff this
+    simp only [NNReal.val_eq_coe, NNReal.coe_div]  
+    rw [(vformula' x.num hnum), (vformula' (x.den:ℤ ) hden)]
+    have hpos₃ : 0 ≤ (@padicNorm' q (fact_iff.mpr hq)) (x.num) := NNReal.coe_nonneg _
+    have hpos₄ : 0 ≤ (@padicNorm' q (fact_iff.mpr hq)) (x.den) := NNReal.coe_nonneg _
+    exact Eq.symm (Real.div_rpow hpos₃ hpos₄ s)
+
+
+
+    
 
 
 
@@ -860,11 +1082,11 @@ theorem IsDiscreteEquiv (v₁ : Valuation K NNReal)
 --     property := Iff.mpr Rat.cast_nonneg x.property
 --   }
 
-def IsDiscreteRat (v : Valuation ℚ NNRat) : Prop 
-:= ∃ (q : NNRat) (hq : q > 1), ∀ (x : ℚˣ), ∃ (n : ℤ), (v x :NNRat) = q ^ n
+def IsDiscreteRat (v : Valuation ℚ NNReal) : Prop 
+:= ∃ (q : NNRat) (hq : q > 1), ∀ (x : ℚˣ), ∃ (n : ℤ), (v x :NNReal) = q ^ n
 
-theorem pValIsDiscrete : IsDiscreteRat (@padicNorm' p hp) := by
-  unfold IsDiscreteRat 
+theorem pValIsDiscrete : IsDiscrete (@padicNorm' p hp) := by
+  unfold IsDiscrete
   simp only [Real.rpow_int_cast, gt_iff_lt, exists_prop]
   use p 
   have hp₃ : 1 < p :=  @Nat.Prime.one_lt p hp.out
@@ -874,8 +1096,7 @@ theorem pValIsDiscrete : IsDiscreteRat (@padicNorm' p hp) := by
   use (-padicValRat p x)
   have h : ↑↑(padicNorm' ↑x) = pNorm p x := rfl
   rw [h]
-  simp only [pNorm, Units.ne_zero]
-  simp only [zpow_neg, ite_false]
+  simp only [pNorm, Units.ne_zero, zpow_neg, ite_false, NNReal.coe_inv, NNReal.coe_zpow, NNReal.coe_nat_cast]
 
 
 
