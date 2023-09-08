@@ -89,7 +89,7 @@ v (x ^ m) = (v x) ^ m := by
     | negSucc m => 
       simp only [zpow_negSucc, map_inv₀, _root_.map_pow]
 
-
+/- For any given real number, there exist a number sequence of rational number converge to that real number from above.-/
 theorem RatSeqAboveTendsto (b : ℝ) : ∃ a : ℕ → ℚ, (∀ n, (b : ℝ) < a n) ∧ Tendsto (fun n ↦ (a n : ℝ)) atTop (nhds b) := by
   have : ∃ a : ℕ → ℝ, (∀ n, (b : ℝ) < a n) ∧ Tendsto a atTop (nhds b)
   · have h : ∃ a, StrictAnti a ∧ (∀ (n : ℕ), b < a n) ∧ Filter.Tendsto a Filter.atTop (nhds b) := exists_seq_strictAnti_tendsto b
@@ -102,6 +102,7 @@ theorem RatSeqAboveTendsto (b : ℝ) : ∃ a : ℕ → ℚ, (∀ n, (b : ℝ) < 
   · exact fun n ↦ (hr n).le
   · exact fun n ↦ (hr' n).le
 
+/- For any given real number, there exist a number sequence of rational number converge to that real number from below.-/
 theorem RatSeqBelowTendsto (b : ℝ) : ∃ a : ℕ → ℚ, (∀ n, (b : ℝ) > a n) ∧ Tendsto (fun n ↦ (a n : ℝ)) atTop (nhds b) := by
   have : ∃ a : ℕ → ℝ, (∀ n, (b : ℝ) > a n) ∧ Tendsto a atTop (nhds b)
   · have h : ∃ a, StrictMono a ∧ (∀ (n : ℕ), a n < b) ∧ Filter.Tendsto a Filter.atTop (nhds b) := exists_seq_strictMono_tendsto b
@@ -115,6 +116,7 @@ theorem RatSeqBelowTendsto (b : ℝ) : ∃ a : ℕ → ℚ, (∀ n, (b : ℝ) > 
   · exact fun n ↦ (hr' n).le
 
 
+/- For any Valuation of a field K, Valuation of a quotient lt one implies element lt relation.-/
 theorem Valuation.div_le_one_iff {K : Type u_3} [inst : Field K] 
 (v : Valuation K NNReal) {x y : K} (h₀ : y ≠ 0) :
  (v (x / y) < 1) ↔ v x < v y := by
@@ -131,6 +133,7 @@ theorem Valuation.div_le_one_iff {K : Type u_3} [inst : Field K]
     exact mul_lt_of_lt_one_left this' h
   · intro h
     exact Iff.mp (mul_lt_iff_lt_one_left this') h
+
 
 theorem Valuation.div_ge_one_iff {K : Type u_3} [inst : Field K] 
 (v : Valuation K NNReal) {x y : K} (h₀ : y ≠ 0) :
@@ -748,16 +751,15 @@ theorem ValuationEqual (v : Valuation ℚ NNReal) {q : ℕ} (hq: Nat.Prime q)
   rw [eq₂]
   have eq₃ : (log (v q) / log q) * log q = log (v q) := by 
     have nezero : log q ≠ 0 := by 
-      have hyneone₁ : (q : ℝ) ≠ 1 := by simp [((fact_iff.mpr hq)).1.ne_one]
-      have hyneone₂ : (q : ℝ) ≠ 0 := by simp [((fact_iff.mpr hq)).1.ne_zero]
-      have hyneone₃ : (q : ℝ) ≠ -1 := by 
-        intro h
+      refine Real.log_ne_zero.mpr ⟨?_, ?_, ?_⟩ 
+      · simp [((fact_iff.mpr hq)).1.ne_zero]
+      · simp [((fact_iff.mpr hq)).1.ne_one]
+      · intro h
         have hyneg : (-1 : ℝ) < 0 := by exact neg_one_lt_zero
         rw [←h] at hyneg
         have hynneg : ¬ (q : ℝ) ≤ 0 := not_le.mpr hq₁
         apply hynneg
         exact le_of_lt hyneg
-      exact Real.log_ne_zero.mpr ⟨hyneone₂, hyneone₁, hyneone₃⟩ 
     exact div_mul_cancel (log (v q)) nezero
   rw [mul_assoc, eq₃]
 
