@@ -1068,24 +1068,9 @@ def MaximalIdealValuRing : Ideal (Valuation.integer v) where
 -- todo : define discrete valuation 
 
 def IsDiscrete (v : Valuation K NNReal) : Prop 
-:= ∃ (q : ℝ) (hq : q > 1), ∀ (x : Kˣ), ∃ (n : ℤ), v x = q ^ n
+:= ∃ (q : ℝ), (1 < q) ∧ (∀ (x : Kˣ), ∃ (n : ℤ), v x = q ^ n)
 
-def IsDiscrete' (v : Valuation K NNReal) : Prop
-:= ∀ (x : Kˣ), ∃ (n : ℤ), v x = 2 ^ n
 
-theorem IsDiscreteEquiv (v₁ : Valuation K NNReal) 
-(v₂ : Valuation K NNReal) (hv₁ : IsDiscrete v₁) 
-(hv₂ : IsDiscrete v₂) : Valuation.IsEquiv v₁ v₂   
-:= sorry
-
--- noncomputable instance NNRat.toNNReal: Coe NNRat NNReal where
---   coe := fun (x:NNRat) ↦ {
---     val := x.val
---     property := Iff.mpr Rat.cast_nonneg x.property
---   }
-
-def IsDiscreteRat (v : Valuation ℚ NNReal) : Prop 
-:= ∃ (q : NNRat) (hq : q > 1), ∀ (x : ℚˣ), ∃ (n : ℤ), (v x :NNReal) = q ^ n
 
 theorem pValIsDiscrete : IsDiscrete (@padicNorm' p hp) := by
   unfold IsDiscrete
@@ -1107,13 +1092,13 @@ noncomputable def ValueOfPrime {v : Valuation K NNReal} (hv : IsDiscrete v) : �
 
 
 def HighUnitGroup (n : ℕ) (hn : n ≥ 1)
-  (hv : ∃ (q : ℝ) (hq : q > 1), ∀ (x : Kˣ), ∃ (n : ℤ), v x = q ^ n)
+  (hv : IsDiscrete v)
   : Subgroup (@GroupOfUnit K _ v) where
-    carrier := { x | v ((1 : K) - ((x : Kˣ): K)) < 1 / (2 ^ (n - 1))}
+    carrier := { x | v ((1 : K) - ((x : Kˣ): K)) < 1 / ((ValueOfPrime hv) ^ (n - 1))}
     mul_mem' := by
       simp only [ge_iff_le, one_div, ne_eq, tsub_pos_iff_lt, Set.mem_setOf_eq, Submonoid.coe_mul,
         Subgroup.coe_toSubmonoid, Units.val_mul, Subtype.forall]
-      intro a ha₀ b hb₀ ha₁ hb₁
+      intro a ha₀ b _ ha₁ hb₁
       have ha : v a = 1 := by exact ha₀
       have hab : (1 : K) - ↑a * ↑b = ((1 : K)- ↑a) + (↑a - ↑a * ↑b):= by simp only [sub_add_sub_cancel]
       rw [hab]
@@ -1129,11 +1114,14 @@ def HighUnitGroup (n : ℕ) (hn : n ≥ 1)
       rw [ha, one_mul] at hab₃
       rw [hab₃] at hab₂
       exact lt_of_le_of_lt hab₂ hb₁
-    one_mem' := by simp only [ge_iff_le, one_div, ne_eq, tsub_pos_iff_lt, Set.mem_setOf_eq, OneMemClass.coe_one,
-      Units.val_one, sub_self, map_zero, inv_pos, gt_iff_lt, zero_lt_two, pow_pos]
+    one_mem' := by 
+      simp only [one_div, Set.mem_setOf_eq, OneMemClass.coe_one, Units.val_one, sub_self, map_zero, NNReal.coe_zero,
+        inv_pos]
+      have : 1 < (ValueOfPrime hv) := (Classical.choose_spec hv).1
+      refine' Real.rpow_pos_of_pos _ ((n : ℝ) - 1)
+      linarith
     inv_mem' := by 
-      simp only [ge_iff_le, one_div, ne_eq, tsub_pos_iff_lt, Set.mem_setOf_eq, SubgroupClass.coe_inv,
-        Units.val_inv_eq_inv_val, Subtype.forall]
+      simp only [one_div, Set.mem_setOf_eq, SubgroupClass.coe_inv, Units.val_inv_eq_inv_val, Subtype.forall]
       intro a ha₀ ha₁
       have h : (1 - (a : K)⁻¹) * a = a - (a : K)⁻¹ * a := by exact one_sub_mul ((a: K)⁻¹) (a:K)
       have h₁ : (1 - (a : K)⁻¹) * a = a - (1 : K) := by 
@@ -1146,19 +1134,32 @@ def HighUnitGroup (n : ℕ) (hn : n ≥ 1)
       have h₅ : v (1 - (a : K)⁻¹) = v (1 - (a : K)) := by
        rw [←h₄, ←h₃, ha]
        simp only [mul_one]
-      exact Eq.trans_lt (id (h₅)) ha₁
-      
-      
+      have h₆ :(v (1 - (a : K)⁻¹) : ℝ) = (v (1 - (a : K)) : ℝ) := congrArg NNReal.toReal h₅
+      exact Eq.trans_lt (id (h₆)) ha₁
+
+
 def Idealp (n : ℕ)  (hn : n ≥ 1)
-  (hv : ∃ (q : ℝ) (hq : q > 1), ∀ (x : Kˣ), ∃ (n : ℤ), v x = q ^ n): Ideal (Valuation.integer v) where
-    carrier := { x | v (x : K) < 1 / (2 ^ (n - 1))}
-    add_mem' {x y} hx hy := lt_of_le_of_lt (v.map_add x y) (max_lt  hx hy)
-    zero_mem' := by simp only [ge_iff_le, one_div, ne_eq, tsub_pos_iff_lt, Set.mem_setOf_eq, ZeroMemClass.coe_zero,
-      map_zero, inv_pos, gt_iff_lt, zero_lt_two, pow_pos]
+  (hv : IsDiscrete v): Ideal (Valuation.integer v) where
+    carrier := { x | v (x : K) < 1 / ((ValueOfPrime hv) ^ (n - 1))}
+    add_mem' {x y} hx hy := by 
+      have : v (x + y) ≤ max (v x) (v y) := v.map_add x y
+      have h : (v (x + y): ℝ) ≤ max ((v x): ℝ) ((v y): ℝ) := this
+      have h₁ : max ((v x) : ℝ) ((v y): ℝ) < 1 / ((ValueOfPrime hv) ^ (n - 1)) := by
+        refine max_lt ?_ ?_
+        · exact hx
+        · exact hy
+      exact lt_of_le_of_lt h h₁
+    zero_mem' := by 
+      simp only [one_div, Set.mem_setOf_eq, ZeroMemClass.coe_zero, map_zero, NNReal.coe_zero, inv_pos]
+      have : 1 < (ValueOfPrime hv) := (Classical.choose_spec hv).1
+      refine' Real.rpow_pos_of_pos _ ((n : ℝ) - 1)
+      linarith
     smul_mem' := by 
-      simp
+      simp only [one_div, Set.mem_setOf_eq, smul_eq_mul, Submonoid.coe_mul, Subsemiring.coe_toSubmonoid,
+        Subring.coe_toSubsemiring, map_mul, NNReal.coe_mul, Subtype.forall]
       intro a ha b hb hbb
-      exact mul_lt_of_le_one_of_lt ha hbb
+      exact mul_lt_of_le_one_of_lt_of_nonneg ha hbb (NNReal.coe_nonneg (v b))
+      
 
 -- theorem UnitGroupIsomorphism (n : ℕ) (hn : n ≥ 1) (hv : ∃ (q : ℝ) (hq : q > 1), ∀ (x : Kˣ), ∃ (n : ℤ), v x = q ^ n): 
 -- (@GroupOfUnit K _ v) ⧸ (HighUnitGroup v (n : ℕ)) ≃+*  
