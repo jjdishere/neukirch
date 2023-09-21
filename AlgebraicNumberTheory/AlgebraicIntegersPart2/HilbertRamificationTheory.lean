@@ -27,7 +27,7 @@ section Galois
 
 open IntermediateField AlgEquiv MonoidHom QuotientGroup
 
-variable {K L :Type _} [Field K] [Field L] [Algebra K L] [FiniteDimensional K L]
+variable {K L : Type _} [Field K] [Field L] [Algebra K L] [FiniteDimensional K L]
 
 /- If `H` is a subgroup of `Gal(L/K)`, then `Gal(L / fixedField H)` is isomorphic to `H`. -/
 def IntermediateField.subgroup_equiv_aut (H : Subgroup (L ≃ₐ[K] L)) : 
@@ -134,7 +134,7 @@ theorem IsGalois.Normal_aut_equiv_quotient [IsGalois K L] (H : Subgroup (L ≃�
 
 
 /- An isomorphism maps a Normal Subgroup to a Normal Subgroup. -/
-theorem Subgroup.map_equiv_normal {G G':Type _} [Group G] [Group G'] (f : G ≃* G')
+theorem Subgroup.map_equiv_normal {G G': Type _} [Group G] [Group G'] (f : G ≃* G')
     (H : Subgroup G) [hn: Normal H] : Normal (map f.toMonoidHom H) := by
   have h : map f.toMonoidHom ⊤ = ⊤ := map_top_of_surjective f (MulEquiv.surjective f)
   refine' normalizer_eq_top.mp _
@@ -142,13 +142,13 @@ theorem Subgroup.map_equiv_normal {G G':Type _} [Group G] [Group G'] (f : G ≃*
 
 /- If a subgroup the whole group, then the number of quotient group elements obtained by 
 quotienting this subgroup is equal to one. -/
-theorem QuotientGroup.quotient_top_card_eq_one {G :Type _} [Group G] [Fintype G] 
+theorem QuotientGroup.quotient_top_card_eq_one {G : Type _} [Group G] [Fintype G] 
     {H : Subgroup G} (h : H = ⊤) : Fintype.card (G ⧸ H) = 1 := by
   have hm := Subgroup.card_eq_card_quotient_mul_card_subgroup H
   nth_rw 1 [(Subgroup.card_eq_iff_eq_top H).mpr h, ← one_mul (Fintype.card G)] at hm
   exact mul_right_cancel₀ Fintype.card_ne_zero hm.symm
 
-variable (G :Type _) [Group G] {H : Subgroup G} (K : Subgroup H)
+variable (G : Type _) [Group G] {H : Subgroup G} (K : Subgroup H)
 
 /- If `H` is a subgroup of `G` and `K` is a subgroup of `H`, then `K` can be viewed as a subgroup
 of `G`. -/
@@ -179,7 +179,7 @@ end Galois
 
 namespace Polynomial
 
-variable {R :Type _} (S L :Type _) [CommRing R] [CommRing S] [IsDomain S] [CommRing L] [IsDomain L]
+variable {R : Type _} (S L : Type _) [CommRing R] [CommRing S] [IsDomain S] [CommRing L] [IsDomain L]
 [Algebra R L] [Algebra S L] [Algebra R S] [IsScalarTower R S L] [IsIntegralClosure S R L] 
 {p : R[X]} (hp : p.Monic)
 
@@ -215,7 +215,7 @@ theorem isIntegralClosure_root_card_eq_ofMonic :
 
 /- A variant of the theorem `roots_map_of_injective_of_card_eq_natDegree` that replaces the 
 injectivity condition with the condition `Polynomial.map f p ≠ 0`. -/
-theorem roots_map_of_card_eq_natDegree {A B :Type _} [CommRing A] [CommRing B] 
+theorem roots_map_of_card_eq_natDegree {A B : Type _} [CommRing A] [CommRing B] 
     [IsDomain A] [IsDomain B] {p : A[X]} {f : A →+* B} (h : p.map f ≠ 0) 
     (hroots : card p.roots = p.natDegree) : p.roots.map f  = (map f p).roots := by
   apply eq_of_le_of_card_le (map_roots_le h)
@@ -229,7 +229,7 @@ namespace Ideal
 
 /- If the product of a finite number of elements in the commutative semiring `R` lies in the 
 prime ideal `p`, then at least one of those elements is in `p`. -/
-theorem IsPrime.prod_mem {R ι :Type _} [CommSemiring R] {p : Ideal R} [hp : p.IsPrime] 
+theorem IsPrime.prod_mem {R ι : Type _} [CommSemiring R] {p : Ideal R} [hp : p.IsPrime] 
     {s : Finset ι} {x : ι → R} (h : ∏ i in s, x i ∈ p) : ∃ i : s, x i ∈ p := by
   induction' s using Finset.induction_on with n s nns hn
   · rw[Finset.prod_empty] at h
@@ -240,8 +240,10 @@ theorem IsPrime.prod_mem {R ι :Type _} [CommSemiring R] {p : Ideal R} [hp : p.I
     use ⟨n, Finset.mem_insert_self n s⟩
     rcases hn h with ⟨i, hi⟩
     use ⟨i, Finset.mem_insert_of_mem i.2⟩
-  
-variable {R S :Type _} [CommRing R] [CommRing S] [Algebra R S] [IsNoetherian R S] (p : Ideal S)
+
+open Module Module.Finite
+
+variable {R S : Type _} [CommRing R] [CommRing S] [Algebra R S] [Finite R S] (p : Ideal S)
 
 instance Quotient.algebraQuotientComap : 
   Algebra (R ⧸ comap (algebraMap R S) p) (S ⧸ p) := Quotient.algebraQuotientOfLeComap (le_of_eq rfl)
@@ -251,13 +253,11 @@ instance : Module (R ⧸ comap (algebraMap R S) p) (S ⧸ p) := Algebra.toModule
 instance : IsScalarTower R (R ⧸ comap (algebraMap R S) p) (S ⧸ p) := 
   IsScalarTower.of_algebraMap_eq (fun _ ↦ rfl)
 
-/- If `S` is a Noetherian `R`-module, then `S ⧸ p` is a finite 
-`R ⧸ comap (algebraMap R S) p`-module. TODO : prove the case when `S` is a finite `R`-module. -/
-instance Quotient_finite_quotient_comap_ofIsNoetherian : 
-  Module.Finite (R ⧸ comap (algebraMap R S) p) (S ⧸ p) := 
-    @Module.IsNoetherian.finite _ _ _ _ _ <| isNoetherian_of_tower R <|
-      isNoetherian_of_surjective S (Ideal.Quotient.mkₐ R p).toLinearMap <|
-        LinearMap.range_eq_top.mpr Ideal.Quotient.mk_surjective
+/- If `S` is a finite `R`-module, then `S ⧸ p` is a finite 
+`R ⧸ comap (algebraMap R S) p`-module. -/
+instance Quotient_finite_quotient_comap : Finite (R ⧸ comap (algebraMap R S) p) (S ⧸ p) :=
+  have := of_surjective (Quotient.mkₐ R p).toLinearMap (Quotient.mkₐ_surjective R p)
+  of_restrictScalars_finite R (R ⧸ comap (algebraMap R S) p) (S ⧸ p) 
 
 end Ideal
 
@@ -286,7 +286,7 @@ namespace NumberField
 
 section preparation
 
-variable (K L :Type _) [Field K] [NumberField K] [Field L] [Algebra K L]
+variable (K L : Type _) [Field K] [NumberField K] [Field L] [Algebra K L]
 
 /- A finite extension of a number field is a number field. -/
 theorem of_finite_extension [FiniteDimensional K L] : NumberField L where
@@ -297,14 +297,14 @@ theorem of_finite_extension [FiniteDimensional K L] : NumberField L where
 
 variable [NumberField L]
 
-/- Any extension between Number Fields is finite. -/
+/- Any extension of a Number Field is a finite extension. -/
 instance Extension.FiniteDimensional : FiniteDimensional K L :=
   Module.Finite.of_restrictScalars_finite ℚ K L
 
-instance of_IntermediateField {K L :Type _} [Field K] [NumberField K] [Field L] [NumberField L]
+instance of_IntermediateField {K L : Type _} [Field K] [NumberField K] [Field L] [NumberField L]
   [Algebra K L] (E : IntermediateField K L) : NumberField E := of_finite_extension K E
 
-theorem of_tower (E :Type _) [Field E] [Algebra K E] [Algebra E L] [IsScalarTower K E L] :
+theorem of_tower (E : Type _) [Field E] [Algebra K E] [Algebra E L] [IsScalarTower K E L] :
     NumberField E := let _ := FiniteDimensional.left K E L
   of_finite_extension K E
 
@@ -367,7 +367,7 @@ theorem algebraMap.injective : Function.Injective (algebraMap (𝓞 K) (𝓞 L))
 instance instIsScalarTower_IntermediateField_ringOfIntegers (E : IntermediateField K L) : 
   IsScalarTower (𝓞 K) (𝓞 E) (𝓞 L) := IsScalarTower.of_algebraMap_eq (fun _ ↦ rfl)
 
-instance instIsScalarTower_ringOfIntegers (E L :Type _) [Field E] [NumberField E] [Field L] 
+instance instIsScalarTower_ringOfIntegers (E L : Type _) [Field E] [NumberField E] [Field L] 
     [NumberField L] [Algebra K E] [Algebra E L] [Algebra K L] [IsScalarTower K E L] : 
     IsScalarTower (𝓞 K) (𝓞 E) (𝓞 L) := by
   refine' IsScalarTower.of_algebraMap_eq (fun x ↦ _)
@@ -377,7 +377,7 @@ instance instIsScalarTower_ringOfIntegers (E L :Type _) [Field E] [NumberField E
       rw[IsScalarTower.algebraMap_eq K E L]
       rfl
 
-variable {L :Type _} [Field L] [NumberField L] [Algebra K L] (P : Ideal (𝓞 L)) (p : Ideal (𝓞 K))
+variable {L : Type _} [Field L] [NumberField L] [Algebra K L] (P : Ideal (𝓞 L)) (p : Ideal (𝓞 K))
 
 /- The ideal obtained by intersecting `𝓞 K` and `P`. -/
 abbrev IdealBelow : Ideal (𝓞 K) := comap (algebraMap (𝓞 K) (𝓞 L)) P
@@ -418,7 +418,7 @@ instance Ideal_comap_int.IsMaximal: IsMaximal (comap (algebraMap ℤ (𝓞 K)) p
 
 /- For any maximal idela `p` in `𝓞 K`, there exists a maximal ideal in `𝓞 L` lying over `p`. -/
 theorem exists_ideal_over_maximal_of_ringOfIntegers (p : Ideal (𝓞 K)) [p.IsMaximal]
-    (L :Type _) [Field L] [NumberField L] [Algebra K L] : 
+    (L : Type _) [Field L] [NumberField L] [Algebra K L] : 
     ∃ (P : Ideal (𝓞 L)), IsMaximal P ∧ P lies_over p := by
   rcases exists_ideal_over_maximal_of_isIntegral (Extension_ringOfIntegers.isIntegral K L) p 
     (by simp only [algebraMap_ker_eq_bot K L, bot_le]) with ⟨P, hpm, hp⟩
@@ -440,8 +440,8 @@ theorem prime_iff_isMaximal (P : Ideal (𝓞 L)) : Prime P ↔ IsMaximal P :=
     fun hp ↦ prime_of_isPrime (ne_bot_ofIsMaximal P) (IsMaximal.isPrime hp)⟩
 
 /- The `Finset` consists of all primes lying over `p : Ideal (𝓞 K)`. -/
-noncomputable abbrev primes_over {K :Type _} [Field K] [NumberField K] (p : Ideal (𝓞 K)) 
-    (L :Type _) [Field L] [NumberField L] [Algebra K L] : Finset (Ideal (𝓞 L)) :=
+noncomputable abbrev primes_over {K : Type _} [Field K] [NumberField K] (p : Ideal (𝓞 K)) 
+    (L : Type _) [Field L] [NumberField L] [Algebra K L] : Finset (Ideal (𝓞 L)) :=
   (UniqueFactorizationMonoid.factors (map (algebraMap (𝓞 K) (𝓞 L)) p)).toFinset
 
 open UniqueFactorizationMonoid
@@ -471,7 +471,7 @@ instance primes_over_inst_lies_over (Q : primes_over p L) : Q.1 lies_over p :=
 the subset `primes_over p L` of `Ideal (𝓞 L)`.  -/
 abbrev primes_over.mk : primes_over p L := ⟨P, (primes_over_mem p P).mpr ⟨hpm, by infer_instance⟩⟩
 
-theorem primes_over_card_ne_zero (L :Type _) [Field L] [NumberField L] [Algebra K L] : 
+theorem primes_over_card_ne_zero (L : Type _) [Field L] [NumberField L] [Algebra K L] : 
     Finset.card (primes_over p L) ≠ 0 := by
   rcases exists_ideal_over_maximal_of_ringOfIntegers p L with ⟨P, hp⟩
   exact Finset.card_ne_zero_of_mem ((primes_over_mem p P).mpr hp)
@@ -503,7 +503,7 @@ theorem unique_primes_over_card_eq_one : Finset.card (primes_over p L) = 1 :=
 
 
 
-variable {E :Type _} [Field E] [NumberField E] [Algebra K E] [Algebra E L] [IsScalarTower K E L]
+variable {E : Type _} [Field E] [NumberField E] [Algebra K E] [Algebra E L] [IsScalarTower K E L]
 (p : Ideal (𝓞 K)) (𝔓 : Ideal (𝓞 E)) (P : Ideal (𝓞 L)) [p.IsMaximal] [𝔓.IsMaximal] [P.IsMaximal]
 
 theorem ideal_lies_over.trans [hp : 𝔓 lies_over p] [hP : P lies_over 𝔓] : P lies_over p where
@@ -559,7 +559,7 @@ end preparation
 
 section decomposition
 
-variable {K L :Type _} [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L]
+variable {K L : Type _} [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L]
 (p : Ideal (𝓞 K)) (P : Ideal (𝓞 L)) [p.IsMaximal] [hpm : P.IsMaximal] [hp : P lies_over p]
 
 /- If `P` lies over `p`, then the residue class field of `p` has a canonical map to
@@ -578,11 +578,11 @@ instance : Module (𝓞 K) ((𝓞 L) ⧸ P) := Algebra.toModule
 instance : @IsScalarTower (𝓞 K) ((𝓞 K) ⧸ p) ((𝓞 L) ⧸ P) _ Algebra.toSMul Algebra.toSMul := 
   IsScalarTower.of_algebraMap_eq (fun _ ↦ rfl)
 
-/- Any extension between residue class fields is finite. -/
+/- The extension between residue class fields is finite. -/
 instance Residue_Field_instFiniteDimensional : FiniteDimensional ((𝓞 K) ⧸ p) ((𝓞 L) ⧸ P) :=
-  @Module.IsNoetherian.finite ((𝓞 K) ⧸ p) ((𝓞 L) ⧸ P) _ _ _ <| isNoetherian_of_tower (𝓞 K) <|
-    isNoetherian_of_surjective (𝓞 L) (Ideal.Quotient.mkₐ (𝓞 K) P).toLinearMap <|
-      LinearMap.range_eq_top.mpr Ideal.Quotient.mk_surjective
+  have := Module.Finite.of_surjective (Quotient.mkₐ (𝓞 K) P).toLinearMap <|
+    Quotient.mkₐ_surjective (𝓞 K) P
+  Module.Finite.of_restrictScalars_finite (𝓞 K) ((𝓞 K) ⧸ p) ((𝓞 L) ⧸ P)
 
  
 
@@ -780,14 +780,14 @@ theorem inertiaDeg_eq_of_isGalois (Q : Ideal (𝓞 L)) [Q.IsMaximal] [Q lies_ove
 /- In the case of Galois extension, it can be seen from the Theorem `ramificationIdx_eq_of_IsGalois`
 that all `ramificationIdx` are the same, which we define as the `ramificationIdx_of_isGalois`. -/
 noncomputable def ramificationIdx_of_isGalois (p : Ideal (𝓞 K)) [p.IsMaximal]
-    (L :Type _) [Field L] [NumberField L] [Algebra K L] [IsGalois K L] : ℕ := 
+    (L : Type _) [Field L] [NumberField L] [Algebra K L] : ℕ := 
   ramificationIdx (algebraMap (𝓞 K) (𝓞 L)) p <| 
     Classical.choose (exists_ideal_over_maximal_of_ringOfIntegers p L)
 
 /- In the case of Galois extension, it can be seen from the Theorem `inertiaDeg_eq_of_IsGalois`
 that all `inertiaDeg` are the same, which we define as the `inertiaDeg_of_isGalois`. -/
 noncomputable def inertiaDeg_of_isGalois (p : Ideal (𝓞 K)) [p.IsMaximal]
-    (L :Type _) [Field L] [NumberField L] [Algebra K L] [IsGalois K L] : ℕ := 
+    (L : Type _) [Field L] [NumberField L] [Algebra K L] : ℕ := 
   inertiaDeg (algebraMap (𝓞 K) (𝓞 L)) p <| 
     Classical.choose (exists_ideal_over_maximal_of_ringOfIntegers p L)
 
@@ -808,7 +808,7 @@ theorem inertiaDeg_eq_inertiaDeg_of_isGalois [IsGalois K L] :
   exact inertiaDeg_eq_of_isGalois p P _
 
 /- The form of the **fundamental identity** in the case of Galois extension. -/
-theorem ramificationIdx_mul_inertiaDeg_of_isGalois (L :Type _) [Field L] [NumberField L] 
+theorem ramificationIdx_mul_inertiaDeg_of_isGalois (L : Type _) [Field L] [NumberField L] 
     [Algebra K L] [IsGalois K L] : 
     Finset.card (primes_over p L) * (ramificationIdx_of_isGalois p L * inertiaDeg_of_isGalois p L) =
     FiniteDimensional.finrank K L := by
@@ -828,7 +828,7 @@ open MulAction
 
 /- The `MulAction` of the Galois group `L ≃ₐ[K] L` on the set `primes_over p L`, 
 given by `σ ↦ (P ↦ σ P)`. -/
-instance Gal_MulAction_primes (L :Type _) [Field L] [NumberField L] [Algebra K L] : 
+instance Gal_MulAction_primes (L : Type _) [Field L] [NumberField L] [Algebra K L] : 
     MulAction (L ≃ₐ[K] L) (primes_over p L) where
   smul σ Q := primes_over.mk p (map (GalRingHom σ) Q.1)
   one_smul Q := 
@@ -984,20 +984,23 @@ theorem inertiaDeg_of_DecompositionIdeal_over_bot_eq_one : inertiaDeg
 
 -- Proposition 9.4
 
+instance : Module.Finite ℤ (𝓞 K) := Module.IsNoetherian.finite ℤ (𝓞 K)
+
 instance : Module.Finite (ℤ ⧸ comap (algebraMap ℤ (𝓞 K)) p) ((𝓞 K) ⧸ p) :=
-  Quotient_finite_quotient_comap_ofIsNoetherian p
+  Quotient_finite_quotient_comap p
 
 /- The residue class field of a number field is a finite field. -/
 noncomputable instance Residue_Field_instFintype : Fintype ((𝓞 K) ⧸ p) :=
   fintypeOfFintype (ℤ ⧸ (comap (algebraMap ℤ (𝓞 K)) p)) ((𝓞 K) ⧸ p)
 
-/- The extension between the residue class fields of number fields is a Galois extension. -/
+/- The extension between residue class fields of number fields is a Galois extension. -/
 instance Extension_of_Residue_Fields_instIsGalois : IsGalois ((𝓞 K) ⧸ p) ((𝓞 L) ⧸ P) := 
   GaloisField.instIsGalois
 
 /- The inertia group of `P` over `K` is the subgorup of `L ≃ₐ[K] L` that consists of all 
 the `σ : L ≃ₐ[K] L` that are identity modulo `P`. -/
-def InertiaGroup (_ : Ideal (𝓞 K)) (P : Ideal (𝓞 L)) : Subgroup (L ≃ₐ[K] L) where
+def InertiaGroup (K : Type _) {L : Type _} [Field K] [NumberField K] [Field L] [NumberField L] 
+    [Algebra K L] (P : Ideal (𝓞 L)) [P.IsMaximal] : Subgroup (L ≃ₐ[K] L) where
   carrier := { σ : L ≃ₐ[K] L |  
     ∀ x : (𝓞 L), Ideal.Quotient.mk P (GalRingHom σ x) = Ideal.Quotient.mk P x }
   mul_mem' := by
@@ -1009,24 +1012,24 @@ def InertiaGroup (_ : Ideal (𝓞 K)) (P : Ideal (𝓞 L)) : Subgroup (L ≃ₐ[
     intro σ hs x
     rw[← hs (GalRingHom σ⁻¹ x), GalRingHom_mul_right_inv_mem σ x]
 
-theorem InertiaGroup_le_DecompositionGroup : InertiaGroup p P ≤ DecompositionGroup p P := by
+theorem InertiaGroup_le_DecompositionGroup : InertiaGroup K P ≤ DecompositionGroup p P := by
   refine' fun σ hs ↦ (DecompositionGroup_mem p P σ).mpr <| 
     le_antisymm (map_le_of_le_comap (fun x hx ↦ _)) (fun x hx ↦ _)
   · have h := add_mem (Ideal.Quotient.eq.mp (hs x)) hx
     rw[sub_add_cancel] at h
     exact mem_comap.mpr h
   · rw[← GalRingHom_mul_right_inv_mem σ x]
-    have h := add_mem (Ideal.Quotient.eq.mp (((InertiaGroup p P).inv_mem hs) x)) hx
+    have h := add_mem (Ideal.Quotient.eq.mp (((InertiaGroup K P).inv_mem hs) x)) hx
     rw[sub_add_cancel] at h
     exact mem_map_of_mem (GalRingHom σ) h
 
-end decomposition
+
 
 section unique
 
 open FiniteDimensional IntermediateField Polynomial
 
-variable {K L :Type _} [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L]
+variable {K L : Type _} [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L]
 (p : Ideal (𝓞 K)) (P : Ideal (𝓞 L)) [p.IsMaximal] [P.IsMaximal] [hp : P unique_lies_over p]
 
 /- If `P` is the unique ideal lying over `p`, then `P` remains invariant under the action of `σ`. -/
@@ -1118,7 +1121,7 @@ open IsGalois
 
 /- If `P` is the unique ideal lying over `p`, then the `InertiaGroup` is equal to the 
 kernel of the homomorphism `ResidueGaloisHom`. -/
-theorem InertiaGroup_eq_ker : InertiaGroup p P = MonoidHom.ker (ResidueGaloisHom p P) := by
+theorem InertiaGroup_eq_ker : InertiaGroup K P = MonoidHom.ker (ResidueGaloisHom p P) := by
   ext σ
   rw[MonoidHom.mem_ker, AlgEquiv.ext_iff]
   constructor
@@ -1132,28 +1135,34 @@ theorem InertiaGroup_eq_ker : InertiaGroup p P = MonoidHom.ker (ResidueGaloisHom
     rw[← h]
     rfl
 
-/- If `P` is the unique ideal lying over `p`, then the `InertiaGroup p P` is a normal subgroup. -/
-instance InertiaGroup_Normal : Subgroup.Normal (InertiaGroup p P) := by
+/- If `P` is the unique ideal lying over `p`, then the `InertiaGroup K P` is a normal subgroup. -/
+theorem InertiaGroup_Normal : Subgroup.Normal (InertiaGroup K P) := by
   rw[InertiaGroup_eq_ker p P]
   exact MonoidHom.normal_ker (ResidueGaloisHom p P)
 
 theorem aut_quoutient_InertiaGroup_equiv_residueField_aut [Normal K L] : 
-    (L ≃ₐ[K] L) ⧸ (InertiaGroup p P) ≃* (((𝓞 L) ⧸ P) ≃ₐ[(𝓞 K) ⧸ p] ((𝓞 L) ⧸ P)) :=
+    @MulEquiv ((L ≃ₐ[K] L) ⧸ (InertiaGroup K P)) (((𝓞 L) ⧸ P) ≃ₐ[(𝓞 K) ⧸ p] ((𝓞 L) ⧸ P)) 
+    (by have := InertiaGroup_Normal p P; infer_instance) _ :=
+  have := InertiaGroup_Normal p P
   (QuotientGroup.quotientMulEquivOfEq (InertiaGroup_eq_ker p P)).trans <|
     QuotientGroup.quotientKerEquivOfSurjective _ (ResidueGaloisHom_surjective p P)
 
-/- The intermediate field fixed by `InertiaGroup p P`. -/
-def InertiaField' : IntermediateField K L := fixedField (InertiaGroup p P)
+/- The intermediate field fixed by `InertiaGroup K P`. -/
+def InertiaField' (K : Type _) {L : Type _} [Field K] [NumberField K] [Field L] [NumberField L] 
+    [Algebra K L] (P : Ideal (𝓞 L)) [P.IsMaximal] : IntermediateField K L := 
+  fixedField (InertiaGroup K P)
 
-/- `InertiaField' p P` is a Number Field. -/
-instance InertiaField_NumberField : NumberField (InertiaField' p P) :=
-  of_IntermediateField (InertiaField' p P)
+/- `InertiaField' K P` is a Number Field. -/
+instance InertiaField_NumberField : NumberField (InertiaField' K P) :=
+  of_IntermediateField (InertiaField' K P)
 
 /- The ideal equal to the intersection of `P` and `InertiaField' p P`. -/
-abbrev InertiaIdeal' : Ideal (𝓞 (InertiaField' p P)) := IdealBelow (InertiaField' p P) P
+abbrev InertiaIdeal' (K : Type _) {L : Type _} [Field K] [NumberField K] [Field L] [NumberField L] 
+    [Algebra K L] (P : Ideal (𝓞 L)) [P.IsMaximal] : Ideal (𝓞 (InertiaField' K P)) := 
+  IdealBelow (InertiaField' K P) P
 
 /- `InertiaIdeal' p P` is a maximal Ideal. -/
-instance InertiaIdeal_IsMaxiaml : IsMaximal (InertiaIdeal' p P) := IdealBelow.IsMaximal P
+instance InertiaIdeal_IsMaxiaml : IsMaximal (InertiaIdeal' K P) := IdealBelow.IsMaximal P
 
 
 
@@ -1162,19 +1171,21 @@ instance InertiaIdeal_IsMaxiaml : IsMaximal (InertiaIdeal' p P) := IdealBelow.Is
 variable [IsGalois K L]
 
 /- `(InertiaField' p P) / K` is a Galois extension. -/
-instance InertiaField_isGalois_of_unique : IsGalois K (InertiaField' p P) := 
-  of_fixedField_Normal_Subgroup (InertiaGroup p P)
+theorem InertiaField_isGalois_of_unique : IsGalois K (InertiaField' K P) :=
+  have := InertiaGroup_Normal p P
+  of_fixedField_Normal_Subgroup (InertiaGroup K P)
 
 /- The Galois group `Gal((InertiaField' p P) / K)` is isomorphic to the 
 Galois group `Gal((𝓞 L) ⧸ P) / (𝓞 K) ⧸ p)`. -/
 theorem InertiaField_aut_equiv_ResidueField_aut :
-    ((InertiaField' p P) ≃ₐ[K] (InertiaField' p P)) ≃* (((𝓞 L) ⧸ P) ≃ₐ[(𝓞 K) ⧸ p] ((𝓞 L) ⧸ P)) :=
-  (Normal_aut_equiv_quotient (InertiaGroup p P)).trans <| 
+    ((InertiaField' K P) ≃ₐ[K] (InertiaField' K P)) ≃* (((𝓞 L) ⧸ P) ≃ₐ[(𝓞 K) ⧸ p] ((𝓞 L) ⧸ P)) :=
+  have := InertiaGroup_Normal p P
+  (Normal_aut_equiv_quotient (InertiaGroup K P)).trans <| 
     aut_quoutient_InertiaGroup_equiv_residueField_aut p P
 
-/- The Galois group `Gal(L / (InertiaField' p P))` is isomorphic to `InertiaGroup p P`. -/
+/- The Galois group `Gal(L / (InertiaField' p P))` is isomorphic to `InertiaGroup K P`. -/
 theorem InertiaField_aut_tower_top_equiv_InertiaGroup_of_unique :
-  (L ≃ₐ[InertiaField' p P] L) ≃* InertiaGroup p P := subgroup_equiv_aut (InertiaGroup p P)
+  (L ≃ₐ[InertiaField' K P] L) ≃* InertiaGroup K P := subgroup_equiv_aut (InertiaGroup K P)
 
 /- The extension degree `[L : K]` is equal to the product of the ramification index 
 and the inertia degree of `p` in `L`. -/
@@ -1186,7 +1197,8 @@ theorem finrank_eq_ramificationIdx_mul_inertiaDeg : finrank K L =
 
 /- The extension degree `[InertiaField' p P : K]` is equal to the inertia degree of `p` in `L`. -/
 theorem finrank_bot_InertiaField_eq_inertiaDeg_of_unique :
-    finrank K (InertiaField' p P) = inertiaDeg_of_isGalois p L := by
+    finrank K (InertiaField' K P) = inertiaDeg_of_isGalois p L := by
+  have := InertiaField_isGalois_of_unique p P
   rw[← inertiaDeg_eq_inertiaDeg_of_isGalois p P, inertiaDeg, ← card_aut_eq_finrank]
   rw[Fintype.card_of_bijective (InertiaField_aut_equiv_ResidueField_aut p P).bijective]
   rw[card_aut_eq_finrank, dif_pos hp.over.symm]
@@ -1194,45 +1206,49 @@ theorem finrank_bot_InertiaField_eq_inertiaDeg_of_unique :
 /- The extension degree `[L : InertiaField' p P]` is equal to the 
 ramification index of `p` in `L`. -/
 theorem finrank_InertiaField_top_eq_ramificationIdx_of_unique : 
-    finrank (InertiaField' p P) L = ramificationIdx_of_isGalois p L := by
-  apply mul_left_cancel₀ (ne_of_gt (@finrank_pos K (InertiaField' p P) _ _ _ _ _))
-  rw[finrank_mul_finrank K (InertiaField' p P) L, finrank_bot_InertiaField_eq_inertiaDeg_of_unique, 
-    mul_comm, finrank_eq_ramificationIdx_mul_inertiaDeg p P]
+    finrank (InertiaField' K P) L = ramificationIdx_of_isGalois p L := by
+  have := InertiaField_isGalois_of_unique p P
+  apply mul_left_cancel₀ (ne_of_gt (@finrank_pos K (InertiaField' K P) _ _ _ _ _))
+  rw[finrank_mul_finrank K (InertiaField' K P) L, finrank_eq_ramificationIdx_mul_inertiaDeg p P, 
+    finrank_bot_InertiaField_eq_inertiaDeg_of_unique p P, mul_comm]
 
 theorem InertiaGroup_card_eq_ramificationIdx_of_unique : 
-    Fintype.card (InertiaGroup p P) = ramificationIdx_of_isGalois p L := by
+    Fintype.card (InertiaGroup K P) = ramificationIdx_of_isGalois p L := by
   rw[← finrank_fixedField_eq_card, ← finrank_InertiaField_top_eq_ramificationIdx_of_unique p P]
   rfl
 
-theorem InertiaGroup_InertiaIdeal_top [P unique_lies_over InertiaIdeal' p P] : 
-    InertiaGroup (InertiaIdeal' p P) P = ⊤ := by
-  refine' (Subgroup.eq_top_iff' (InertiaGroup (InertiaIdeal' p P) P)).mpr (fun σ x ↦ _)
-  let τ := (subgroup_equiv_aut (InertiaGroup p P)).toFun σ
+theorem InertiaGroup_InertiaIdeal_top (K : Type _) {L : Type _} [Field K] [NumberField K] [Field L] 
+    [NumberField L] [Algebra K L] (P : Ideal (𝓞 L)) [P.IsMaximal] : 
+    InertiaGroup (InertiaField' K P) P = ⊤ := by
+  refine' (Subgroup.eq_top_iff' (InertiaGroup (InertiaField' K P) P)).mpr (fun σ x ↦ _)
+  let τ := (subgroup_equiv_aut (InertiaGroup K P)).toFun σ
   have hst : (GalRingHom σ) x = (GalRingHom τ.1) x := rfl
   rw[hst, τ.2 x]
 
 theorem inertiaDeg_over_InertiaIdeal_eq_one_of_unique : 
-    inertiaDeg_of_isGalois (InertiaIdeal' p P) L = 1 := by
-  let _ := ideal_unique_lies_over_tower_top p (InertiaIdeal' p P) P
-  rw[← inertiaDeg_eq_inertiaDeg_of_isGalois (InertiaIdeal' p P) P, inertiaDeg, dif_pos rfl]
+    inertiaDeg_of_isGalois (InertiaIdeal' K P) L = 1 := by
+  have := ideal_unique_lies_over_tower_top p (InertiaIdeal' K P) P
+  have := InertiaGroup_Normal (InertiaIdeal' K P) P
+  rw[← inertiaDeg_eq_inertiaDeg_of_isGalois (InertiaIdeal' K P) P, inertiaDeg, dif_pos rfl]
   rw[← card_aut_eq_finrank, ← Fintype.card_of_bijective <| MulEquiv.bijective <| 
-    aut_quoutient_InertiaGroup_equiv_residueField_aut (InertiaIdeal' p P) P]
-  have hm := Subgroup.card_eq_card_quotient_mul_card_subgroup (InertiaGroup (InertiaIdeal' p P) P)
-  nth_rw 1 [(Subgroup.card_eq_iff_eq_top (InertiaGroup (InertiaIdeal' p P) P)).mpr <|
-    InertiaGroup_InertiaIdeal_top p P, ← one_mul (Fintype.card (L ≃ₐ[InertiaField' p P] L))] at hm
+    aut_quoutient_InertiaGroup_equiv_residueField_aut (InertiaIdeal' K P) P]
+  have hm := Subgroup.card_eq_card_quotient_mul_card_subgroup (InertiaGroup (InertiaField' K P) P)
+  nth_rw 1 [(Subgroup.card_eq_iff_eq_top (InertiaGroup (InertiaField' K P) P)).mpr <|
+    InertiaGroup_InertiaIdeal_top K P, ← one_mul (Fintype.card (L ≃ₐ[InertiaField' K P] L))] at hm
   exact mul_right_cancel₀ Fintype.card_ne_zero hm.symm
   
 theorem ramificationIdx_over_InertiaIdeal_eq_ramificationIdx_of_unique :
-    ramificationIdx_of_isGalois (InertiaIdeal' p P) L = ramificationIdx_of_isGalois p L := by
-  let _ := ideal_unique_lies_over_tower_top p (InertiaIdeal' p P) P
+    ramificationIdx_of_isGalois (InertiaIdeal' K P) L = ramificationIdx_of_isGalois p L := by
+  let _ := ideal_unique_lies_over_tower_top p (InertiaIdeal' K P) P
   rw[← finrank_InertiaField_top_eq_ramificationIdx_of_unique p P]
-  rw[finrank_eq_ramificationIdx_mul_inertiaDeg (InertiaIdeal' p P) P]
+  rw[finrank_eq_ramificationIdx_mul_inertiaDeg (InertiaIdeal' K P) P]
   rw[inertiaDeg_over_InertiaIdeal_eq_one_of_unique p P, mul_one]
 
 theorem ramificationIdx_below_InertiaIdeal_eq_one_of_unique : 
-    ramificationIdx_of_isGalois p (InertiaField' p P) = 1 := by
-  let Pt := IdealBelow (InertiaField' p P) P
-  let E := { x // x ∈ InertiaField' p P }
+    ramificationIdx_of_isGalois p (InertiaField' K P) = 1 := by
+  let Pt := IdealBelow (InertiaField' K P) P
+  let E := { x // x ∈ InertiaField' K P }
+  have := InertiaField_isGalois_of_unique p P
   have h := ramificationIdx_algebra_tower (map_isMaximal_ne_bot p E) (map_isMaximal_ne_bot Pt L) 
     (map_isMaximal_ne_bot p L) (ne_bot_ofIsMaximal Pt) (ne_bot_ofIsMaximal P) rfl
   nth_rw 1 [ramificationIdx_eq_ramificationIdx_of_isGalois Pt P, 
@@ -1244,10 +1260,11 @@ theorem ramificationIdx_below_InertiaIdeal_eq_one_of_unique :
     (IsMaximal.isPrime (by infer_instance)) (map_le_of_le_comap (le_of_eq hp.over))) h.symm
 
 theorem InertiaDeg_below_InertiaIdeal_eq_inertiaDeg_of_unique : 
-    inertiaDeg_of_isGalois p (InertiaField' p P) = inertiaDeg_of_isGalois p L := by
-  have h := inertiaDeg_algebra_tower (Ideal_comap_IntermediateField p P (InertiaField' p P)) 
-    (IdealBelow_def (InertiaField' p P) P)
-  nth_rw 1 [inertiaDeg_eq_inertiaDeg_of_isGalois (InertiaIdeal' p P) P, 
+    inertiaDeg_of_isGalois p (InertiaField' K P) = inertiaDeg_of_isGalois p L := by
+  have := InertiaField_isGalois_of_unique p P
+  have h := inertiaDeg_algebra_tower (Ideal_comap_IntermediateField p P (InertiaField' K P)) 
+    (IdealBelow_def (InertiaField' K P) P)
+  nth_rw 1 [inertiaDeg_eq_inertiaDeg_of_isGalois (InertiaIdeal' K P) P, 
     inertiaDeg_over_InertiaIdeal_eq_one_of_unique p P, mul_one] at h
   simp only [inertiaDeg_eq_inertiaDeg_of_isGalois] at h
   exact h.symm
@@ -1260,13 +1277,13 @@ section inertia
 
 open IntermediateField FiniteDimensional
 
-variable {K L :Type _} [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L]
+variable {K L : Type _} [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L]
 (p : Ideal (𝓞 K)) (P : Ideal (𝓞 L)) [p.IsMaximal] [P.IsMaximal] [P lies_over p] [IsGalois K L]
 
 theorem InertiaGroup_eq : 
     Subgroup.map (subgroup_equiv_aut (DecompositionGroup p P)).symm.toMonoidHom
-    ((InertiaGroup p P).subgroupOf (DecompositionGroup p P)) = 
-    InertiaGroup (DecompositionIdeal p P) P := by
+    ((InertiaGroup K P).subgroupOf (DecompositionGroup p P)) = 
+    InertiaGroup (DecompositionField p P) P := by
   ext σ
   rw[Subgroup.mem_map]
   refine' ⟨fun ⟨τ, ht, he⟩ x ↦ by rw[← he, ← Subgroup.mem_subgroupOf.mp ht x]; rfl, fun hs ↦ _⟩
@@ -1274,16 +1291,16 @@ theorem InertiaGroup_eq :
   rw[MulEquiv.toEquiv_eq_coe, Equiv.toFun_as_coe_apply, MulEquiv.coe_toEquiv, 
     MulEquiv.coe_toMonoidHom, MulEquiv.symm_apply_apply]
 
-theorem InertiaGroup_equiv : InertiaGroup (DecompositionIdeal p P) P ≃* InertiaGroup p P := 
+theorem InertiaGroup_equiv : InertiaGroup (DecompositionField p P) P ≃* InertiaGroup K P := 
   (MulEquiv.subgroupCongr (InertiaGroup_eq p P)).symm.trans <|
     ((subgroup_equiv_aut (DecompositionGroup p P)).symm.subgroupMap 
-      ((InertiaGroup p P).subgroupOf (DecompositionGroup p P))).symm.trans <|
+      ((InertiaGroup K P).subgroupOf (DecompositionGroup p P))).symm.trans <|
         (Subgroup.subgroupOfEquivOfLe (InertiaGroup_le_DecompositionGroup p P))
 
 /- The intertia field of `P` over `K` is the intermediate field of `L / DecompositionField p P` 
 fixed by the inertia group pf `P` over `K`. -/
 def InertiaField : IntermediateField (DecompositionField p P) L := 
-  fixedField (InertiaGroup (DecompositionIdeal p P) P)
+  fixedField (InertiaGroup (DecompositionField p P) P)
 
 /- The ideal equal to the intersection of `P` and `InertiaField p P`. -/
 abbrev InertiaIdeal : Ideal (𝓞 (InertiaField p P)) := IdealBelow (InertiaField p P) P
@@ -1303,10 +1320,10 @@ instance : Module (DecompositionField p P) (InertiaField p P) := Algebra.toModul
 instance InertiaField_isGalois : IsGalois (DecompositionField p P) (InertiaField p P) :=
   InertiaField_isGalois_of_unique (DecompositionIdeal p P) P
 
-/- The Galois group `Gal(L / (InertiaField p P))` is isomorphic to `InertiaGroup p P`. -/
+/- The Galois group `Gal(L / (InertiaField p P))` is isomorphic to `InertiaGroup K P`. -/
 theorem InertiaField_aut_tower_top_equiv_InertiaGroup :
-    (L ≃ₐ[InertiaField p P] L) ≃* InertiaGroup p P :=
-  (subgroup_equiv_aut (InertiaGroup (DecompositionIdeal p P) P)).trans (InertiaGroup_equiv p P)
+    (L ≃ₐ[InertiaField p P] L) ≃* InertiaGroup K P :=
+  (subgroup_equiv_aut (InertiaGroup (DecompositionField p P) P)).trans (InertiaGroup_equiv p P)
 
 /- The extension degree `[InertiaField p P : K]` is equal to the inertia degree of `p` in `L`. -/
 theorem finrank_bot_InertiaField_eq_inertiaDeg :
@@ -1322,7 +1339,7 @@ theorem finrank_InertiaField_top_eq_ramificationIdx :
   exact finrank_InertiaField_top_eq_ramificationIdx_of_unique (DecompositionIdeal p P) P
 
 theorem InertiaGroup_card_eq_ramificationIdx : 
-    Fintype.card (InertiaGroup p P) = ramificationIdx_of_isGalois p L := by
+    Fintype.card (InertiaGroup K P) = ramificationIdx_of_isGalois p L := by
   rw[← ramificationIdx_of_DecompositionIdeal p P]
   rw[Fintype.card_of_bijective (InertiaGroup_equiv p P).symm.bijective] 
   rw[InertiaGroup_card_eq_ramificationIdx_of_unique (DecompositionIdeal p P) P]
