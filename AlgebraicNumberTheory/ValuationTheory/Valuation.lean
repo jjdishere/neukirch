@@ -930,7 +930,7 @@ theorem ValuationOfRat (v : Valuation ℚ NNReal)
     have logvq : log (v q) < 0 := by
       have vqpos : 0 < v q := by
         have vqnezero : v q ≠ 0 := by
-          have qnezero : q ≠ 0 := by simp [((fact_iff.mpr hq)).1.ne_zero]
+          have qnezero : q ≠ 0 := by simp only [ne_eq, ((fact_iff.mpr hq)).1.ne_zero, not_false_eq_true]
           have qnezero' : (q : ℚ) ≠ 0 := Iff.mpr Nat.cast_ne_zero qnezero
           exact (Valuation.ne_zero_iff v).mpr qnezero'
         exact Iff.mpr zero_lt_iff vqnezero
@@ -1068,7 +1068,7 @@ def MaximalIdealValuRing : Ideal (Valuation.integer v) where
 -- todo : define discrete valuation 
 
 def IsDiscrete (v : Valuation K NNReal) : Prop 
-:= ∃ (q : ℝ), (1 < q) ∧ (∀ (x : Kˣ), ∃ (n : ℤ), v x = q ^ n)
+:= ∃ (q : ℝ), (1 < q) ∧ (∃ (x : K), v x = q) ∧ (∀ (x : Kˣ), ∃ (n : ℤ), v x = q ^ n)
 
 
 
@@ -1077,13 +1077,24 @@ theorem pValIsDiscrete : IsDiscrete (@padicNorm' p hp) := by
   simp only [Real.rpow_int_cast, gt_iff_lt, exists_prop]
   use p 
   have hp₃ : 1 < p :=  @Nat.Prime.one_lt p hp.out
+  have this' : p ≠ 0 := by sorry
   constructor
   exact Iff.mpr Nat.one_lt_cast hp₃
-  intro x
-  use (-padicValRat p x)
-  have h : ↑↑(padicNorm' ↑x) = pNorm p x := rfl
-  rw [h]
-  simp only [pNorm, Units.ne_zero, zpow_neg, ite_false, NNReal.coe_inv, NNReal.coe_zpow, NNReal.coe_nat_cast]
+  constructor
+  · let p' := (p : ℚ)
+    use p'
+    simp
+    have : (@padicNorm' p hp).toFun p = p := by
+      unfold padicNorm'
+      simp [pNorm, *]
+      sorry
+    sorry
+   -- use p 
+  · intro x
+    use (-padicValRat p x)
+    have h : ↑↑(padicNorm' ↑x) = pNorm p x := rfl
+    rw [h]
+    simp only [pNorm, Units.ne_zero, zpow_neg, ite_false, NNReal.coe_inv, NNReal.coe_zpow, NNReal.coe_nat_cast]
 
 
 

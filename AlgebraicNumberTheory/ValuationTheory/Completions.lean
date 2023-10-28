@@ -217,21 +217,21 @@ theorem ValuationFinExt.map_mul {K : Type _} {L : Type _} [Field K] [Field L]
     ↑v (↑(Algebra.norm K) x) ^ (↑(FiniteDimensional.finrank K L))⁻¹ *
       ↑v (↑(Algebra.norm K) y) ^ (↑(FiniteDimensional.finrank K L))⁻¹
 
-def ValuationFinExt {K : Type _} {L : Type _} [Field K] [Field L]
-(v : Valuation K NNReal) (h : IsCompleteWithValuation v) 
-[Algebra K L] [FiniteDimensional K L]
-: Valuation L NNReal where
-  toFun := fun α ↦ ValExt v α 
-  map_zero' := by 
-    have : 0 < FiniteDimensional.finrank K L := FiniteDimensional.finrank_pos
-    have this': ¬FiniteDimensional.finrank K L = 0 := Nat.pos_iff_ne_zero.mp this
-    simp only [Algebra.norm_zero, map_zero, one_div, ne_eq, inv_eq_zero, Nat.cast_eq_zero, this', not_false_eq_true,
-      NNReal.zero_rpow, ValExt]
-  map_one' := by simp only [ValExt, map_one, one_div, NNReal.one_rpow]
-  map_mul' := by 
-    simp only [map_mul, one_div]
-    sorry
-  map_add_le_max' := sorry
+-- def ValuationFinExt {K : Type _} {L : Type _} [Field K] [Field L]
+-- (v : Valuation K NNReal) (h : IsCompleteWithValuation v) 
+-- [Algebra K L] [FiniteDimensional K L]
+-- : Valuation L NNReal where
+--   toFun := fun α ↦ ValExt v α 
+--   map_zero' := by 
+--     have : 0 < FiniteDimensional.finrank K L := FiniteDimensional.finrank_pos
+--     have this': ¬FiniteDimensional.finrank K L = 0 := Nat.pos_iff_ne_zero.mp this
+--     simp only [Algebra.norm_zero, map_zero, one_div, ne_eq, inv_eq_zero, Nat.cast_eq_zero, this', not_false_eq_true,
+--       NNReal.zero_rpow, ValExt]
+--   map_one' := by simp only [ValExt, map_one, one_div, NNReal.one_rpow]
+--   map_mul' := by 
+--     simp only [map_mul, one_div]
+--     sorry
+--   map_add_le_max' := sorry
 
 
 theorem Valuation.Extension {K : Type _} {L : Type _} [Field K] [Field L]
