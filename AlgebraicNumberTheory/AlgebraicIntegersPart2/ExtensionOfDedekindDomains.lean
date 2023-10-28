@@ -32,9 +32,8 @@ theorem sup_multiset_prod_eq_top {R : Type _} [CommSemiring R] {I : Ideal R}
 
 variable {R S T : Type _} [CommRing R] [CommRing S] [CommRing T]
 
-theorem factor_to_prime_pow [IsDomain R] [IsDedekindDomain R] {P I : Ideal R} [hpm : IsPrime P] 
-    (hp0 : P ≠ ⊥) (hI : I ≠ ⊥) : 
-    ∃ Q : Ideal R, P ⊔ Q = ⊤ ∧ I = P ^ (count P (normalizedFactors I)) * Q := by
+theorem factor_to_prime_pow [IsDomain R] [IsDedekindDomain R] {P I : Ideal R} [hpm : IsPrime P] (hp0 : P ≠ ⊥) 
+    (hI : I ≠ ⊥) : ∃ Q : Ideal R, P ⊔ Q = ⊤ ∧ I = P ^ (count P (normalizedFactors I)) * Q := by
   use Multiset.prod (filter (¬ P = ·) (normalizedFactors I))
   constructor
   · refine' sup_multiset_prod_eq_top (fun p hp ↦ _)
@@ -68,6 +67,17 @@ theorem ramificationIdx_tower [IsDomain S] [IsDedekindDomain S] [IsDomain T] [Is
   rw[hcp] at hpi
   exact hntq hpi
 
+theorem inertiaDeg_tower {f : R →+* S} {g : S →+* T} {p : Ideal R} {P : Ideal S} {I : Ideal T} 
+    [IsMaximal p] [IsMaximal P] [Nontrivial (T ⧸ I)] (hp : p = comap f P) (hP : P = comap g I) : 
+    inertiaDeg (g.comp f) p I = inertiaDeg f p P * inertiaDeg g P I := by
+  have h : comap (g.comp f) I = p := by rw[hp, hP, comap_comap]
+  simp only [inertiaDeg, dif_pos hp.symm, dif_pos hP.symm, dif_pos h]
+  let _ := Quotient.algebraQuotientOfLeComap (le_of_eq hp)
+  let _ := Quotient.algebraQuotientOfLeComap (le_of_eq hP)
+  let _ := Quotient.algebraQuotientOfLeComap (le_of_eq h.symm)
+  have : IsScalarTower (R ⧸ p) (S ⧸ P) (T ⧸ I) := IsScalarTower.of_algebraMap_eq (by rintro ⟨⟩; rfl)
+  exact (finrank_mul_finrank'' (R ⧸ p) (S ⧸ P) (T ⧸ I)).symm
+
 variable [Algebra R S] [Algebra S T] [Algebra R T] [IsScalarTower R S T]
 
 theorem ramificationIdx_algebra_tower [IsDomain S] [IsDedekindDomain S] [IsDomain T] 
@@ -78,20 +88,14 @@ theorem ramificationIdx_algebra_tower [IsDomain S] [IsDedekindDomain S] [IsDomai
     ramificationIdx (algebraMap R S) p P * ramificationIdx (algebraMap S T) P Q := by
   rw[IsScalarTower.algebraMap_eq R S T]
   rw[IsScalarTower.algebraMap_eq R S T] at hfg
-  apply ramificationIdx_tower hf0 hg0 hfg hp0 hq0 hg
+  exact ramificationIdx_tower hf0 hg0 hfg hp0 hq0 hg
 
 theorem inertiaDeg_algebra_tower {p : Ideal R} {P : Ideal S} {I : Ideal T} [IsMaximal p] 
     [IsMaximal P] [Nontrivial (T ⧸ I)] (hp : p = comap (algebraMap R S) P) 
     (hP : P = comap (algebraMap S T) I) : inertiaDeg (algebraMap R T) p I = 
     inertiaDeg (algebraMap R S) p P * inertiaDeg (algebraMap S T) P I := by
   rw[IsScalarTower.algebraMap_eq R S T]
-  have h : comap ((algebraMap S T).comp (algebraMap R S)) I = p := by rw[← comap_comap, ← hP, ← hp]
-  simp only [inertiaDeg, dif_pos hp.symm, dif_pos hP.symm, dif_pos h]
-  let hrs := Quotient.algebraQuotientOfLeComap (le_of_eq hp)
-  let hst := Quotient.algebraQuotientOfLeComap (le_of_eq hP)
-  let hrt := Quotient.algebraQuotientOfLeComap (le_of_eq h.symm)
-  have : IsScalarTower (R ⧸ p) (S ⧸ P) (T ⧸ I) := IsScalarTower.of_algebraMap_eq (by rintro ⟨⟩; rfl)
-  exact (finrank_mul_finrank'' (R ⧸ p) (S ⧸ P) (T ⧸ I)).symm
+  exact inertiaDeg_tower hp hP
 
 
 
