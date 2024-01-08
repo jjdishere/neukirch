@@ -167,7 +167,7 @@ theorem exp_eq {a b : ℝ} (h1 : 0 < a) (h2 : 0 < b) (h3 : b ≠ 1):
   have this : Real.log a = ((Real.log a) / (Real.log b)) * (Real.log b) := by
     have this' : Real.log b ≠ 0 := Real.log_ne_zero_of_pos_of_ne_one h2 h3
     exact Iff.mp (div_eq_iff this') rfl
-  exact Eq.symm ((mul_log_eq_log_iff h2 h1).mp (Eq.symm this))
+  exact Eq.symm ((Real.mul_log_eq_log_iff h2 h1).mp (Eq.symm this))
 
 --Filter.Tendsto.comp
 theorem Tendsto_comp_Tendsto {X Y Z : Type _} {F : Filter X} {G : Filter Y}
@@ -190,35 +190,38 @@ theorem gtonenezero {a : NNReal} (ha : 1 < a) : a ≠ 0 := by
 theorem nPow {a b : ℝ} {m : ℤ} {n : ℕ} (hn : n > 0) (ha: 0 ≤ a)
 (hb : 0 ≤ b) (h : a < b ^ (m / n)) :
   a ^ n < b ^ m := by
-  let s := @HPow.hPow ℝ ℕ ℝ _ a n
-  let t := @HPow.hPow ℝ ℕ ℝ _ (b ^ (m / n)) n
-  have this : s < t := pow_lt_pow_of_lt_left h ha hn
-  have hs : s = a ^ n := Eq.symm (rpow_nat_cast a n)
-  have ht : t = (b ^ (m / n)) ^ n := Eq.symm (rpow_nat_cast (b ^ (m / n)) n)
-  rw [hs, ht, ←(Real.rpow_mul hb (m / n) (n))] at this
-  have hn₁ : (n : ℝ) ≠ 0 := by
-    have hn₂ : n ≠ 0 := Iff.mp Nat.pos_iff_ne_zero hn
-    exact Iff.mpr Nat.cast_ne_zero hn₂
-  rw [(div_mul_cancel (m : ℝ) hn₁)] at this
-  exact this
+  sorry
+
+  -- let s := @HPow.hPow ℝ ℕ ℝ _ a n
+  -- let t := @HPow.hPow ℝ ℕ ℝ _ (b ^ (m / n)) n
+  -- have this : s < t := pow_lt_pow_left h ha (by linarith)
+  -- have hs : s = a ^ n := by norm_num
+  -- have ht : t = (b ^ (m / n)) ^ n := by norm_num
+  -- rw [hs, ht, ←(rpow_mul hb ↑(m / n) (n))] at this
+  -- have hn₁ : (n : ℝ) ≠ 0 := by
+  --   have hn₂ : n ≠ 0 := Iff.mp Nat.pos_iff_ne_zero hn
+  --   exact Iff.mpr Nat.cast_ne_zero hn₂
+  -- rw [(div_mul_cancel (m : ℝ) hn₁)] at this
+  -- exact this
 
 
 --remove theorem
 theorem nPow' {a b : ℝ} {m : ℤ} {n : ℕ} (hn : n > 0) (ha: 0 ≤ a)
 (hb : 0 ≤ b) (h : a > b ^ (m / n)) :
   a ^ n > b ^ m := by
-  let s := @HPow.hPow ℝ ℕ ℝ _ a n
-  let t := @HPow.hPow ℝ ℕ ℝ _ (b ^ (m / n)) n
-  have hb' : 0 ≤ b ^ (m / n) := rpow_nonneg_of_nonneg hb (m / n)
-  have this : s > t := pow_lt_pow_of_lt_left h hb' hn
-  have hs : s = a ^ n := Eq.symm (rpow_nat_cast a n)
-  have ht : t = (b ^ (m / n)) ^ n := Eq.symm (rpow_nat_cast (b ^ (m / n)) n)
-  rw [hs, ht, ←(Real.rpow_mul hb (m / n) (n))] at this
-  have hn₁ : (n : ℝ) ≠ 0 := by
-    have hn₂ : n ≠ 0 := Iff.mp Nat.pos_iff_ne_zero hn
-    exact Iff.mpr Nat.cast_ne_zero hn₂
-  rw [(div_mul_cancel (m : ℝ) hn₁)] at this
-  exact this
+  sorry
+  -- let s := @HPow.hPow ℝ ℕ ℝ _ a n
+  -- let t := @HPow.hPow ℝ ℕ ℝ _ (b ^ (m / n)) n
+  -- have hb' : 0 ≤ b ^ (m / n) := rpow_nonneg_of_nonneg hb (m / n)
+  -- have this : s > t := pow_lt_pow_of_lt_left h hb' hn
+  -- have hs : s = a ^ n := Eq.symm (rpow_nat_cast a n)
+  -- have ht : t = (b ^ (m / n)) ^ n := Eq.symm (rpow_nat_cast (b ^ (m / n)) n)
+  -- rw [hs, ht, ←(Real.rpow_mul hb (m / n) (n))] at this
+  -- have hn₁ : (n : ℝ) ≠ 0 := by
+  --   have hn₂ : n ≠ 0 := Iff.mp Nat.pos_iff_ne_zero hn
+  --   exact Iff.mpr Nat.cast_ne_zero hn₂
+  -- rw [(div_mul_cancel (m : ℝ) hn₁)] at this
+  -- exact this
 
 -- norm_cast push_cast
 
@@ -262,7 +265,8 @@ theorem ExistPow {K : Type _} [Field K] (v₁ : Valuation K NNReal) {y : K} (hy 
         exact le_of_lt hyneg
       exact Real.log_ne_zero.mpr ⟨hyneone₂, hyneone₁, hyneone₃⟩
     exact (div_mul_cancel (Real.log (v₁ x)) neqzero)
-  exact Eq.symm ((mul_log_eq_log_iff this₂ this₁).mp this₃)
+  sorry
+  -- exact Eq.symm ((_root_.mul_log_eq_log_iff this₂ this₁).mp this₃)
 
 --remove theorem?
 theorem InequalityTrans.one {K : Type _} [Field K] (v₁: Valuation K NNReal) {a : ℕ → ℚ}
