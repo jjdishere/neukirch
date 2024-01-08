@@ -379,16 +379,15 @@ theorem Valuation.isEquiv_iff_exist_rpow_eq_aux₁ (v₁: Valuation K NNReal)
     rw [hx₁]
     specialize @ha₀ i
     exact Real.rpow_lt_rpow_of_exponent_lt hy ha₀
-  have hv₁ : ∀ (i : ℕ), v₁ x < ((v₁ y): ℝ) ^ (((a i).num : ℚ) / ((a i).den :ℚ)) := by
+  have hv₁ : ∀ (i : ℕ), v₁ x < ((v₁ y): ℝ) ^ (((a i).num : ℝ) / ((a i).den : ℝ)) := by
     intro i
     have this : (a i).num / (a i).den  = a i := Rat.num_div_den (a i)
-    have this' : (((a i).num : ℚ): ℝ) / (((a i).den : ℚ): ℝ) = ((a i): ℝ)  := by
-      rw [← (Rat.cast_div ((a i).num :ℚ) ((a i).den: ℚ))]
-      exact congrArg Rat.cast this
+    have this' : ((a i).num : ℝ) / ((a i).den: ℝ) = ((a i): ℝ)  := by
+      exact (Rat.cast_def (a i)).symm
     rw [this']
     exact (hxa i)
   have hxa₂ : ∀ (i : ℕ), v₁ ((x ^ (a i).den) / (y ^ (a i).num)) < 1 := InequalityTrans.one v₁ hy hv₁
-  have hv₂ : ∀ (i : ℕ), v₂ x < ((v₂ y): ℝ) ^ (((a i).num: ℚ) / ((a i).den : ℚ)) := by
+  have hv₂ : ∀ (i : ℕ), v₂ x < ((v₂ y): ℝ) ^ (((a i).num: ℝ) / ((a i).den : ℝ)) := by
     have hxa₃ : ∀ (i : ℕ), v₂ ((x ^ (a i).den) / (y ^ (a i).num)) < 1 :=
       fun i => ((Valuation.isEquiv_iff_val_lt_one v₁ v₂).mp h).mp (hxa₂ i)
     have hxa₄ : ∀ (i : ℕ), v₂ (x ^ (a i).den) < v₂ (y ^ (a i).num) := by
@@ -404,7 +403,7 @@ theorem Valuation.isEquiv_iff_exist_rpow_eq_aux₁ (v₁: Valuation K NNReal)
       rw [←(Valuation.map_pow v₂ x (a i).den), ←(Valuation.map_zpow v₂ y (a i).num)]
       exact hxa₄
     exact InequalityTrans'.one v₂ hxa₅
-  have hv₂' : ∀ (i : ℕ), v₂ x < ((v₂ y): ℝ) ^ (a i) := by
+  have hv₂' : ∀ (i : ℕ), v₂ x < ((v₂ y): ℝ) ^ (a i: ℝ) := by
     intro i
     have this : (a i).num / (a i).den  = a i := Rat.num_div_den (a i)
     have this' : (((a i).num : ℚ): ℝ) / (((a i).den : ℚ): ℝ) = ((a i): ℝ)  := by
@@ -412,7 +411,7 @@ theorem Valuation.isEquiv_iff_exist_rpow_eq_aux₁ (v₁: Valuation K NNReal)
       exact congrArg Rat.cast this
     rw [←this']
     exact (hv₂ i)
-  have hv₂'' : ∀ (i : ℕ), (v₂ x) ≤  ((v₂ y) : ℝ) ^ (a i) := fun i ↦ le_of_lt (hv₂' i)
+  have hv₂'' : ∀ (i : ℕ), (v₂ x) ≤  ((v₂ y) : ℝ) ^ (a i: ℝ) := fun i ↦ le_of_lt (hv₂' i)
   let f' := fun (x : ℝ) ↦ ((v₂ y) : ℝ) ^ x
   have f'ContinuousAt : ContinuousAt f' α := by
     have hy' : 1 < ((v₂ y) : ℝ) := by
@@ -422,7 +421,7 @@ theorem Valuation.isEquiv_iff_exist_rpow_eq_aux₁ (v₁: Valuation K NNReal)
   let f := f' ∘ (fun i ↦ ((a i) : ℝ))
   have lim₁ : Tendsto f' (nhds α) (nhds (((v₂ y) : ℝ) ^ α)) := ContinuousAt.tendsto f'ContinuousAt
   have lim : Filter.Tendsto f atTop (nhds (((v₂ y) : ℝ) ^ α)) := Tendsto_comp_Tendsto ha₁ lim₁
-  exact ge_of_tendsto' lim hv₂''
+  exact ge_of_tendsto lim hv₂''
 
 
 theorem Valuation.isEquiv_iff_exist_rpow_eq_aux₂ (v₁: Valuation K NNReal)
@@ -431,20 +430,19 @@ theorem Valuation.isEquiv_iff_exist_rpow_eq_aux₂ (v₁: Valuation K NNReal)
 : (v₂ x ≥ (v₂ y) ^ α) := by
   have sequbelow : ∃ a : ℕ → ℚ, (∀ i, (α : ℝ) > a i) ∧ Tendsto (fun k ↦ (a k : ℝ)) atTop (nhds α) := Real.rat_seq_below_tendsto α
   rcases sequbelow with ⟨a, ha₀, ha₁⟩
-  have hxa : ∀ (i : ℕ), v₁ x > ((v₁ y): ℝ) ^ (a i) := by
+  have hxa : ∀ (i : ℕ), v₁ x > ((v₁ y): ℝ) ^ (a i: ℝ) := by
     intro i
     rw [hx₁]
     exact Real.rpow_lt_rpow_of_exponent_lt hy (ha₀ i)
-  have hv₁ : ∀ (i : ℕ), v₁ x > ((v₁ y): ℝ) ^ (((a i).num : ℚ) / ((a i).den :ℚ)) := by
+  have hv₁ : ∀ (i : ℕ), v₁ x > ((v₁ y): ℝ) ^ (((a i).num : ℝ) / ((a i).den : ℝ)) := by
     intro i
     have this : (a i).num / (a i).den  = a i := Rat.num_div_den (a i)
-    have this' : (((a i).num : ℚ): ℝ) / (((a i).den : ℚ): ℝ) = ((a i): ℝ)  := by
-      rw [← (Rat.cast_div ((a i).num :ℚ) ((a i).den: ℚ))]
-      exact congrArg Rat.cast this
+    have this' : ((a i).num : ℝ) / ((a i).den: ℝ) = ((a i): ℝ)  := by
+      exact (Rat.cast_def (a i)).symm
     rw [this']
     exact (hxa i)
   have hxa₂ : ∀ (i : ℕ), v₁ ((x ^ (a i).den) / (y ^ (a i).num)) > 1 := InequalityTrans.one' v₁ hy hv₁
-  have hv₂ : ∀ (i : ℕ), v₂ x > ((v₂ y): ℝ) ^ (((a i).num: ℚ) / ((a i).den : ℚ)) := by
+  have hv₂ : ∀ (i : ℕ), v₂ x > ((v₂ y): ℝ) ^ (((a i).num: ℝ) / ((a i).den : ℝ)) := by
     have hxa₃ : ∀ (i : ℕ), v₂ ((x ^ (a i).den) / (y ^ (a i).num)) > 1 :=
       fun i => ((Valuation.isEquiv_iff_val_gt_one v₁ v₂).mp h).mp (hxa₂ i)
     have hxa₄ : ∀ (i : ℕ), v₂ (x ^ (a i).den) > v₂ (y ^ (a i).num) := by
@@ -460,7 +458,7 @@ theorem Valuation.isEquiv_iff_exist_rpow_eq_aux₂ (v₁: Valuation K NNReal)
       rw [←(Valuation.map_pow v₂ x (a i).den), ←(Valuation.map_zpow v₂ y (a i).num)]
       exact hxa₄
     exact InequalityTrans'.one' v₂ hxa₅
-  have hv₂' : ∀ (i : ℕ), v₂ x > ((v₂ y): ℝ) ^ (a i) := by
+  have hv₂' : ∀ (i : ℕ), v₂ x > ((v₂ y): ℝ) ^ (a i: ℝ) := by
     intro i
     have this : (a i).num / (a i).den  = a i := Rat.num_div_den (a i)
     have this' : (((a i).num : ℚ): ℝ) / (((a i).den : ℚ): ℝ) = ((a i): ℝ)  := by
@@ -468,7 +466,7 @@ theorem Valuation.isEquiv_iff_exist_rpow_eq_aux₂ (v₁: Valuation K NNReal)
       exact congrArg Rat.cast this
     rw [←this']
     exact (hv₂ i)
-  have hv₂'' : ∀ (i : ℕ), (v₂ x) ≥ ((v₂ y) : ℝ) ^ (a i) := fun i ↦ le_of_lt (hv₂' i)
+  have hv₂'' : ∀ (i : ℕ), (v₂ x) ≥ ((v₂ y) : ℝ) ^ (a i : ℝ ) := fun i ↦ le_of_lt (hv₂' i)
   let f' := fun (x : ℝ) ↦ ((v₂ y) : ℝ) ^ x
   have f'ContinuousAt : ContinuousAt f' α := by
     have hy' : 1 < ((v₂ y) : ℝ) := by
@@ -512,16 +510,16 @@ Valuation.IsEquiv v₁ v₂ ↔ ∃ (s : ℝ) (hs : s > 0), ∀ {x : K}, v₁ x 
       have this' : v₂ x = 0 := (Valuation.zero_iff v₂).mpr hx
       have this₁ : ((v₁ x) : ℝ) = 0 := Iff.mpr (NNReal.coe_eq_zero ((v₁ x): NNReal)) this
       have this₂ : ((v₂ x) : ℝ) = 0 := Iff.mpr (NNReal.coe_eq_zero ((v₂ x): NNReal)) this'
-      rw [this₁, this₂]
+      rw [this, this']
       have this'' : s ≠ 0 := ne_of_gt hs
-      rw [(zero_rpow this'')]
+      exact (NNReal.zero_rpow this'').symm
     · by_cases hxx : (v₂ x) = 1
       · have vxeqone : (v₁ x)  = 1 := by
           exact ((Valuation.isEquiv_iff_val_eq_one v₁ v₂).mp h).mpr hxx
         have vxeqone' : ((v₁ x) : ℝ) = 1 := Iff.mpr (NNReal.coe_eq_one ((v₁ x): NNReal)) vxeqone
         have hxx' : ((v₂ x) : ℝ) = 1 := Iff.mpr (NNReal.coe_eq_one ((v₂ x): NNReal)) hxx
-        rw [hxx', vxeqone']
-        rw [Real.one_rpow s]
+        rw [hxx, vxeqone]
+        exact (NNReal.one_rpow s).symm
       · have hxy' :  (Real.log (v₁ x)) / (Real.log (v₂ x)) = (Real.log (v₁ y)) / (Real.log (v₂ y))  := by
           specialize @hxy x hx
           rcases hxy with ⟨α, hxy₁, hxy₂⟩
@@ -539,6 +537,7 @@ Valuation.IsEquiv v₁ v₂ ↔ ∃ (s : ℝ) (hs : s > 0), ∀ {x : K}, v₁ x 
             have hvy₁ : 0 < ((v₂ y) : ℝ) := pos_of_gt (((Valuation.isEquiv_iff_val_gt_one v₁ v₂).mp h).mp hy)
             have hvy₂ : 0 < ((v₂ y) : ℝ) ^ α := rpow_pos_of_pos (pos_of_gt (((Valuation.isEquiv_iff_val_gt_one v₁ v₂).mp h).mp hy)) α
             exact Eq.symm ((mul_log_eq_log_iff hvy₁ hvy₂).mpr rfl)
+          simp only [NNReal.coe_rpow]
           rw [this, this']
           exact mul_div_mul_left (log (v₁ y)) (log (v₂ y)) ha
         simp
