@@ -219,6 +219,7 @@ theorem nPow' {a b : ℝ} {m : ℤ} {n : ℕ} (hn : n > 0) (ha: 0 ≤ a)
   rw [(div_mul_cancel (m : ℝ) hn₁)] at this
   exact this
 
+-- norm_cast push_cast
 
 
 theorem rPowAt {a : ℝ} (ha : 1 < a) {α : ℝ}:
@@ -240,8 +241,7 @@ ContinuousAt (fun (x : ℝ) ↦ a ^ x) α := by
   exact ContinuousAt.rpow hf' hg' this
 
 theorem ExistPow {K : Type _} [Field K] (v₁ : Valuation K NNReal) {y : K} (hy : v₁ y > 1 )
-: ∀ (x : K) (hx : x ≠ 0), ∃ (α : ℝ), v₁ x = (v₁ y) ^ α  := by
-  intro x hx
+    (x : K) (hx : x ≠ 0) : ∃ (α : ℝ), v₁ x = (v₁ y) ^ α  := by
   have this : v₁ x ≠ 0 := (Valuation.ne_zero_iff v₁).mpr hx
   let α := Real.log (v₁ x) / Real.log (v₁ y)
   use α
@@ -534,13 +534,11 @@ Valuation.IsEquiv v₁ v₂ ↔ ∃ (s : ℝ) (hs : s > 0), ∀ {x : K}, v₁ x 
           have this : log (((v₁ y) : ℝ) ^ α ) = α * log ((v₁ y) : ℝ) := by
             have hvy₁ : 0 < ((v₁ y) : ℝ) := pos_of_gt hy
             have hvy₂ : 0 < ((v₁ y) : ℝ) ^ α := rpow_pos_of_pos (pos_of_gt hy) α
-            have hvy₃ : ((v₁ y) : ℝ) ^ α = ((v₁ y) : ℝ) ^ α := rfl
-            exact Eq.symm ((mul_log_eq_log_iff hvy₁ hvy₂).mpr hvy₃)
+            exact Eq.symm ((mul_log_eq_log_iff hvy₁ hvy₂).mpr rfl)
           have this' : log (((v₂ y) : ℝ) ^ α ) = α * log ((v₂ y) : ℝ) := by
             have hvy₁ : 0 < ((v₂ y) : ℝ) := pos_of_gt (((Valuation.isEquiv_iff_val_gt_one v₁ v₂).mp h).mp hy)
             have hvy₂ : 0 < ((v₂ y) : ℝ) ^ α := rpow_pos_of_pos (pos_of_gt (((Valuation.isEquiv_iff_val_gt_one v₁ v₂).mp h).mp hy)) α
-            have hvy₃ : ((v₂ y) : ℝ) ^ α = ((v₂ y) : ℝ) ^ α := rfl
-            exact Eq.symm ((mul_log_eq_log_iff hvy₁ hvy₂).mpr hvy₃)
+            exact Eq.symm ((mul_log_eq_log_iff hvy₁ hvy₂).mpr rfl)
           rw [this, this']
           exact mul_div_mul_left (log (v₁ y)) (log (v₂ y)) ha
         simp
@@ -564,7 +562,7 @@ Valuation.IsEquiv v₁ v₂ ↔ ∃ (s : ℝ) (hs : s > 0), ∀ {x : K}, v₁ x 
     intro x
     constructor
     · by_cases hx : x = 0
-      · intro hv₁
+      · intro _
         have this : v₂ x = 0 := (Valuation.zero_iff v₂).mpr hx
         rw [this]
         exact one_pos
@@ -577,7 +575,7 @@ Valuation.IsEquiv v₁ v₂ ↔ ∃ (s : ℝ) (hs : s > 0), ∀ {x : K}, v₁ x 
           exact Iff.mpr zero_lt_iff this
         simpa [hs, lt_asymm hs] using ((Real.rpow_lt_one_iff_of_pos hvpos)).mp hv₁
     · by_cases hx : x = 0
-      · intro hv₁
+      · intro _
         have this : v₁ x = 0 := (Valuation.zero_iff v₁).mpr hx
         rw [this]
         exact one_pos
@@ -832,9 +830,8 @@ theorem ValuationEquation (v : Valuation ℚ NNReal) (q : ℕ) (hq : Nat.Prime q
 
 
 theorem ValuationOfRat (v : Valuation ℚ NNReal)
-(existvpltone : ∃ (q : ℕ) (hq : Nat.Prime q), v q < 1):
-∃ (q : ℕ) (hq : Nat.Prime q), Valuation.IsEquiv v (@padicNorm' q (fact_iff.mpr hq))
-:= by
+    (existvpltone : ∃ (q : ℕ) (hq : Nat.Prime q), v q < 1):
+    ∃ (q : ℕ) (hq : Nat.Prime q), Valuation.IsEquiv v (@padicNorm' q (fact_iff.mpr hq)):= by
   have vnleone : ∀ (n : ℕ), v n ≤ 1 := by
     intro n
     induction' n with n hn
@@ -845,11 +842,7 @@ theorem ValuationOfRat (v : Valuation ℚ NNReal)
       have hone' : v 1 = 1 := Valuation.map_one v
       exact Eq.ge (id (Eq.symm hone'))
     have hvnaddone : (v (n + 1) ≤ v n) ∨ (v (n + 1) ≤ v 1) := by exact Valuation.map_add' v (↑n) 1
-    have trivial : v (↑n + 1) = v ↑(n + 1) := by
-      have ht : ((n : ℚ) + 1) = ((n + 1) : ℚ) := rfl
-      rw [ht]
-      apply Eq.symm (FunLike.congr_arg v _)
-      exact Mathlib.Tactic.Ring.inv_add rfl rfl
+    have trivial : v (↑n + 1) = v ↑(n + 1) := by congr; norm_cast
     rcases hvnaddone with hn₁ | hn₂
     rw [trivial] at hn₁
     exact le_trans hn₁ hn
@@ -862,11 +855,7 @@ theorem ValuationOfRat (v : Valuation ℚ NNReal)
     | negSucc a =>
       rw [← Valuation.map_neg]
       simp only [Int.cast_negSucc, Nat.cast_add, Nat.cast_one, neg_add_rev, neg_neg]
-      have trivial (n : ℕ): v (↑n + 1) = v ↑(n + 1) := by
-        have ht : ((n : ℚ) + 1) = ((n + 1) : ℚ) := rfl
-        rw [ht]
-        apply Eq.symm (FunLike.congr_arg v _)
-        exact Mathlib.Tactic.Ring.inv_add rfl rfl
+      have trivial (n : ℕ): v (↑n + 1) = v ↑(n + 1) := by congr; norm_cast
       rw [trivial]
       exact vnleone (a + 1)
   rcases existvpltone with ⟨q, hq, qltone⟩
@@ -890,7 +879,6 @@ theorem ValuationOfRat (v : Valuation ℚ NNReal)
       PrincipalIdealRing.isMaximal_of_irreducible
       (Iff.mpr PrincipalIdealRing.irreducible_iff_prime ((Iff.mp Nat.prime_iff_prime_int hq)))
     have qZlea : qZ ≤ Ideala := by
-      have qina : (q : ℤ) ∈ Ideala := qltone
       exact Iff.mpr (Ideal.span_singleton_le_iff_mem Ideala) qltone
     have anetop : Ideala ≠ ⊤ := by
       intro h
@@ -1071,10 +1059,9 @@ theorem pValIsDiscrete : IsDiscrete (@padicNorm' p hp) := by
   · let p' := (p : ℚ)
     use p'
     simp
-    have : (@padicNorm' p hp).toFun p = p := by
+    have : (@padicNorm' p hp).toFun p = (p : NNReal)⁻¹ := by
       unfold padicNorm'
       simp [pNorm, *]
-      sorry
     sorry
    -- use p
   · intro x
