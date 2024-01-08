@@ -154,10 +154,7 @@ theorem Valuation.div_ge_one_iff {K : Type u_3} [inst : Field K]
 -- version problem
 open Real
 
-theorem mul_log_eq_log_iff {x y z : ℝ} (hx : 0 < x) (hz : 0 < z) :
-    y * log x = log z ↔ x ^ y = z :=
-  ⟨fun h ↦ log_injOn_pos (rpow_pos_of_pos hx _) hz <| log_rpow hx _ |>.trans h,
-  by rintro rfl; rw [log_rpow hx]⟩
+
 -- version problem
 
 
@@ -167,7 +164,8 @@ theorem exp_eq {a b : ℝ} (h1 : 0 < a) (h2 : 0 < b) (h3 : b ≠ 1):
   have this : Real.log a = ((Real.log a) / (Real.log b)) * (Real.log b) := by
     have this' : Real.log b ≠ 0 := Real.log_ne_zero_of_pos_of_ne_one h2 h3
     exact Iff.mp (div_eq_iff this') rfl
-  exact Eq.symm ((Real.mul_log_eq_log_iff h2 h1).mp (Eq.symm this))
+  sorry
+  --exact Eq.symm ((Real.mul_log_eq_log_iff h2 h1).mp (Eq.symm this))
 
 --Filter.Tendsto.comp
 theorem Tendsto_comp_Tendsto {X Y Z : Type _} {F : Filter X} {G : Filter Y}
@@ -271,7 +269,7 @@ theorem ExistPow {K : Type _} [Field K] (v₁ : Valuation K NNReal) {y : K} (hy 
 --remove theorem?
 theorem InequalityTrans.one {K : Type _} [Field K] (v₁: Valuation K NNReal) {a : ℕ → ℚ}
 {x y : K} (hy : v₁ y > 1 )
-(hv₁ : ∀ (i : ℕ), v₁ x < ((v₁ y): ℝ) ^ (((a i).num : ℚ) / ((a i).den :ℚ)))
+(hv₁ : ∀ (i : ℕ), v₁ x < ((v₁ y): ℝ) ^ (((a i).num : ℝ) / ((a i).den : ℝ)))
 : ∀ (i : ℕ), v₁ ((x ^ (a i).den) / (y ^ (a i).num)) < 1 := by
   intro i
   specialize @hv₁ i
@@ -301,7 +299,7 @@ theorem InequalityTrans.one {K : Type _} [Field K] (v₁: Valuation K NNReal) {a
 --remove theorem?
 theorem InequalityTrans.one' {K : Type _} [Field K] (v₁: Valuation K NNReal) {a : ℕ → ℚ}
 {x y : K} (hy : v₁ y > 1 )
-(hv₁ : ∀ (i : ℕ), v₁ x > ((v₁ y): ℝ) ^ (((a i).num : ℚ) / ((a i).den :ℚ)))
+(hv₁ : ∀ (i : ℕ), v₁ x > ((v₁ y): ℝ) ^ (((a i).num : ℝ) / ((a i).den : ℝ)))
 : ∀ (i : ℕ), v₁ ((x ^ (a i).den) / (y ^ (a i).num)) > 1 := by
   intro i
   specialize @hv₁ i
@@ -376,7 +374,7 @@ theorem Valuation.isEquiv_iff_exist_rpow_eq_aux₁ (v₁: Valuation K NNReal)
 : (v₂ x ≤ (v₂ y) ^ α) := by
   have sequabove : ∃ a : ℕ → ℚ, (∀ i, (α : ℝ) < a i) ∧ Tendsto (fun k ↦ (a k : ℝ)) atTop (nhds α) := Real.rat_seq_above_tendsto α
   rcases sequabove with ⟨a, ha₀, ha₁⟩
-  have hxa : ∀ (i : ℕ), v₁ x < ((v₁ y): ℝ) ^ (a i) := by
+  have hxa : ∀ (i : ℕ), v₁ x < ((v₁ y): ℝ) ^ (a i : ℝ) := by
     intro i
     rw [hx₁]
     specialize @ha₀ i
