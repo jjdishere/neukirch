@@ -164,8 +164,7 @@ theorem exp_eq {a b : ℝ} (h1 : 0 < a) (h2 : 0 < b) (h3 : b ≠ 1):
   have this : Real.log a = ((Real.log a) / (Real.log b)) * (Real.log b) := by
     have this' : Real.log b ≠ 0 := Real.log_ne_zero_of_pos_of_ne_one h2 h3
     exact Iff.mp (div_eq_iff this') rfl
-  sorry
-  --exact Eq.symm ((Real.mul_log_eq_log_iff h2 h1).mp (Eq.symm this))
+  exact Eq.symm ((mul_log_eq_log_iff h2 h1).mp (Eq.symm this))
 
 --Filter.Tendsto.comp
 theorem Tendsto_comp_Tendsto {X Y Z : Type _} {F : Filter X} {G : Filter Y}
@@ -184,42 +183,28 @@ theorem gtonenezero {a : NNReal} (ha : 1 < a) : a ≠ 0 := by
   have neq₂ : ¬ a ≤ 1 := lt_iff_not_le.mp ha
   exact neq₂ neq₁
 
---remove theorem
+--remove theorem `example`
 theorem nPow {a b : ℝ} {m : ℤ} {n : ℕ} (hn : n > 0) (ha: 0 ≤ a)
-(hb : 0 ≤ b) (h : a < b ^ (m / n)) :
+(hb : 0 ≤ b) (h : a < b ^ (m / n : ℝ)) :
   a ^ n < b ^ m := by
-  let s := @HPow.hPow ℝ ℕ ℝ _ a n
-  let t := @HPow.hPow ℝ ℕ ℝ _ (b ^ (m / n)) n
-  have this : s < t := pow_lt_pow_left h ha (by linarith)
-  have hs : s = a ^ n := by norm_num
-  have ht : t = (b ^ (m / n)) ^ n := by norm_num
-  rw [hs, ht, ←(rpow_mul hb ↑(m / n) (n))] at this
-  have hn₁ : (n : ℝ) ≠ 0 := by
-    have hn₂ : n ≠ 0 := Iff.mp Nat.pos_iff_ne_zero hn
-    exact Iff.mpr Nat.cast_ne_zero hn₂
-  rw [(div_mul_cancel (m : ℝ) hn₁)] at this
-  exact this
+  calc
+    a ^ n < (b ^ (m / n : ℝ)) ^ n := pow_lt_pow_left h ha (by linarith)
+    _ = (b ^ (m / n : ℝ)) ^ (n : ℝ) := by norm_num
+    _ = b ^ m := by
+      rw [← rpow_mul hb]
+      field_simp
 
-
---remove theorem
+--remove theorem `example`
 theorem nPow' {a b : ℝ} {m : ℤ} {n : ℕ} (hn : n > 0) (ha: 0 ≤ a)
-(hb : 0 ≤ b) (h : a > b ^ (m / n)) :
+(hb : 0 ≤ b) (h : a > b ^ (m / n : ℝ)) :
   a ^ n > b ^ m := by
-  sorry
-  -- let s := @HPow.hPow ℝ ℕ ℝ _ a n
-  -- let t := @HPow.hPow ℝ ℕ ℝ _ (b ^ (m / n)) n
-  -- have hb' : 0 ≤ b ^ (m / n) := rpow_nonneg_of_nonneg hb (m / n)
-  -- have this : s > t := pow_lt_pow_of_lt_left h hb' hn
-  -- have hs : s = a ^ n := Eq.symm (rpow_nat_cast a n)
-  -- have ht : t = (b ^ (m / n)) ^ n := Eq.symm (rpow_nat_cast (b ^ (m / n)) n)
-  -- rw [hs, ht, ←(Real.rpow_mul hb (m / n) (n))] at this
-  -- have hn₁ : (n : ℝ) ≠ 0 := by
-  --   have hn₂ : n ≠ 0 := Iff.mp Nat.pos_iff_ne_zero hn
-  --   exact Iff.mpr Nat.cast_ne_zero hn₂
-  -- rw [(div_mul_cancel (m : ℝ) hn₁)] at this
-  -- exact this
+  calc
+    a ^ n > (b ^ (m / n : ℝ)) ^ n := pow_lt_pow_left h (by positivity) (by linarith)
+    _ = (b ^ (m / n : ℝ)) ^ (n : ℝ) := by norm_num
+    _ = b ^ m := by
+      rw [← rpow_mul hb]
+      field_simp
 
--- norm_cast push_cast
 
 --ContinuousAt.rpow
 theorem rPowAt {a : ℝ} (ha : 1 < a) {α : ℝ}:
@@ -261,7 +246,8 @@ theorem ExistPow {K : Type _} [Field K] (v₁ : Valuation K NNReal) {y : K} (hy 
         exact le_of_lt hyneg
       exact Real.log_ne_zero.mpr ⟨hyneone₂, hyneone₁, hyneone₃⟩
     exact (div_mul_cancel (Real.log (v₁ x)) neqzero)
-  exact Eq.symm ((_root_.mul_log_eq_log_iff this₂ this₁).mp this₃)
+  ext
+  exact Eq.symm ((mul_log_eq_log_iff this₂ this₁).mp this₃)
 
 --remove theorem?
 theorem InequalityTrans.one {K : Type _} [Field K] (v₁: Valuation K NNReal) {a : ℕ → ℚ}
@@ -279,8 +265,8 @@ theorem InequalityTrans.one {K : Type _} [Field K] (v₁: Valuation K NNReal) {a
   let t:= @HPow.hPow NNReal ℤ NNReal _ (v₁ y) (a i).num
   let s' := @HPow.hPow ℝ ℕ ℝ  _ (v₁ x) (a i).den
   let t' := @HPow.hPow ℝ ℤ ℝ  _ (v₁ y) (a i).num
-  have seq'' : ((v₁ x)) ^ ((a i).den)= s'  := rpow_nat_cast ((v₁ x): ℝ) (a i).den
-  have teq'' : ((v₁ y): ℝ) ^ (((a i).num)) = t' := rpow_int_cast ((v₁ y): ℝ) (a i).num
+  have seq'' : ((v₁ x)) ^ ((a i).den)= s'  := by norm_num
+  have teq'' : ((v₁ y): ℝ) ^ (((a i).num)) = t' := by norm_num
   have seq' : s = s' := rfl
   have teq' : t = t' := rfl
   rw [seq'', teq'', ←seq', ←teq'] at hv₁'
@@ -309,8 +295,8 @@ theorem InequalityTrans.one' {K : Type _} [Field K] (v₁: Valuation K NNReal) {
   let t:= @HPow.hPow NNReal ℤ NNReal _ (v₁ y) (a i).num
   let s' := @HPow.hPow ℝ ℕ ℝ  _ (v₁ x) (a i).den
   let t' := @HPow.hPow ℝ ℤ ℝ  _ (v₁ y) (a i).num
-  have seq'' : ((v₁ x)) ^ ((a i).den)= s'  := rpow_nat_cast ((v₁ x): ℝ) (a i).den
-  have teq'' : ((v₁ y): ℝ) ^ (((a i).num)) = t' := rpow_int_cast ((v₁ y): ℝ) (a i).num
+  have seq'' : ((v₁ x)) ^ ((a i).den)= s' := by norm_num
+  have teq'' : ((v₁ y): ℝ) ^ (((a i).num)) = t' := by norm_num
   have seq' : s = s' := rfl
   have teq' : t = t' := rfl
   rw [seq'', teq'', ←seq', ←teq'] at hv₁'
@@ -326,23 +312,36 @@ theorem InequalityTrans.one' {K : Type _} [Field K] (v₁: Valuation K NNReal) {
 theorem InequalityTrans'.one {K : Type _} [Field K] (v₂: Valuation K NNReal) {a : ℕ → ℚ}
 {x y : K}
 (hx : ∀ (i : ℕ), v₂ x ^ (a i).den < v₂ y ^ (a i).num)
-: ∀ (i : ℕ), v₂ x < ((v₂ y): ℝ) ^ (((a i).num: ℚ) / ((a i).den : ℚ)) := by
+: ∀ (i : ℕ), v₂ x < ((v₂ y): ℝ) ^ ((a i) : ℝ) := by
   intro i
-  specialize @hx i
-  have hvxpos : 0 ≤ ((v₂ x): ℝ) := NNReal.coe_nonneg (v₂ x)
-  have hvypos : 0 ≤ ((v₂ y): ℝ) := NNReal.coe_nonneg (v₂ y)
-  have hvypos' : 0 ≤ ((v₂ y): ℝ) ^ (((a i).num: ℚ) / ((a i).den : ℚ)) := rpow_nonneg_of_nonneg hvypos (((a i).num : ℝ)/ ((a i).den : ℝ))
-  have denpos : 0 < (a i).den := Rat.pos (a i)
-  have denpos' : 0 < ((a i).den : ℝ) := Iff.mpr Nat.cast_pos denpos
-  have dennezero : ((a i).den : ℝ) ≠ 0  := ne_of_gt denpos'
-  apply (Real.rpow_lt_rpow_iff hvxpos hvypos' denpos').mp
-  rw [←(Real.rpow_mul hvypos ((((a i).num: ℚ) : ℝ) / (((a i).den: ℚ) : ℝ)) ((a i).den : ℝ))]
-  simp only [rpow_nat_cast, Rat.cast_coe_int, Rat.cast_coe_nat, ne_eq, Nat.cast_eq_zero]
-  rw [div_mul_cancel ((a i).num: ℝ) dennezero]
-  let s := @HPow.hPow ℝ ℤ ℝ _ (v₂ y) (a i).num
-  have this : ((v₂ y): ℝ) ^ (((a i).num)) = s := rpow_int_cast ((v₂ y): ℝ) (a i).num
-  rw [this]
-  exact hx
+  specialize hx i
+  calc
+    (v₂ x : ℝ) = ((v₂ x) ^ ((a i).den : ℝ)) ^ (((a i).den : ℝ)⁻¹) := by
+      push_cast
+      rw [← rpow_mul (by positivity)]
+      field_simp [(a i).den_nz]
+    _ < (v₂ y ^ (a i).num) ^ (((a i).den : ℝ)⁻¹) := by
+      apply Real.rpow_lt_rpow
+      · positivity
+      · norm_cast
+      · simp only [inv_pos, Nat.cast_pos, Rat.den_pos]
+    _ = (v₂ y) ^ ((a i) : ℝ) := by
+      nth_rw 3 [show a i = (a i).num * ((a i).den : ℚ)⁻¹ by field_simp [Rat.num_div_den (a i)]]
+      simp [rpow_mul]
+  -- specialize hx i
+  -- have hvxpos : 0 ≤ ((v₂ x): ℝ) := NNReal.coe_nonneg (v₂ x)
+  -- have hvypos' : 0 ≤ ((v₂ y): ℝ) ^ (a i : ℝ) := Real.rpow_nonneg (by positivity) _
+  -- have denpos : 0 < (a i).den := Rat.pos (a i)
+  -- have denpos' : 0 < ((a i).den : ℝ) := Iff.mpr Nat.cast_pos denpos
+  -- have dennezero : ((a i).den : ℝ) ≠ 0  := ne_of_gt denpos'
+  -- apply (Real.rpow_lt_rpow_iff hvxpos hvypos' denpos').mp
+  -- rw [←(Real.rpow_mul hvypos ((((a i).num: ℚ) : ℝ) / (((a i).den: ℚ) : ℝ)) ((a i).den : ℝ))]
+  -- simp only [rpow_nat_cast, Rat.cast_coe_int, Rat.cast_coe_nat, ne_eq, Nat.cast_eq_zero]
+  -- rw [div_mul_cancel ((a i).num: ℝ) dennezero]
+  -- let s := @HPow.hPow ℝ ℤ ℝ _ (v₂ y) (a i).num
+  -- have this : ((v₂ y): ℝ) ^ (((a i).num)) = s := rpow_int_cast ((v₂ y): ℝ) (a i).num
+  -- rw [this]
+  -- exact hx
 
 --remove theorem?
 theorem InequalityTrans'.one' {K : Type _} [Field K] (v₂: Valuation K NNReal) {a : ℕ → ℚ}
