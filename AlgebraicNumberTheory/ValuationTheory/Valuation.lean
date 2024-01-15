@@ -701,35 +701,21 @@ pNorm p (x + y) ≤ pNorm p x ∨ pNorm p (x + y) ≤ pNorm p y :=
             simp [pNorm, *]
             left
             rw [←inv_zpow, ←inv_zpow, inv_zpow', inv_zpow']
-            have hxx' : padicValRat p x ≤ padicValRat p (x + y) :=
-            padicValRat.le_padicValRat_add_of_le hxy hxx
-            have hxx'' : - padicValRat p (x + y) ≤ - padicValRat p x :=
-            neg_le_neg hxx'
-            have hp' : (1 : NNReal) ≤ p := by
-              have hp₂ : p ≠ 0 := by simp [hp.1.ne_zero]
-              have hp₃ : 1 ≤ p := by exact Iff.mpr Nat.one_le_iff_ne_zero hp₂
-              exact Iff.mpr Nat.one_le_cast hp₃
-            exact zpow_le_of_le hp' hxx''
+            apply zpow_le_of_le _ (neg_le_neg (padicValRat.le_padicValRat_add_of_le hxy hxx))
+            apply Nat.one_le_cast.mpr (Nat.one_le_iff_ne_zero.mpr _)
+            simp [hp.1.ne_zero]
             else by
               simp [pNorm, *]
               right
               rw [←inv_zpow, ←inv_zpow, inv_zpow', inv_zpow']
-              have hy₁ : padicValRat p x > padicValRat p y := Iff.mp Int.not_le hxx
-              have hy₂ : padicValRat p y ≤ padicValRat p x := Int.le_of_lt hy₁
-              have hxy' : y + x ≠ 0 := by
-                exact fun h1 => hxy (Eq.mp (add_comm y x ▸ Eq.refl (y + x = 0)) h1)
-              have hyy' : padicValRat p y ≤ padicValRat p (y + x) :=
-              @padicValRat.le_padicValRat_add_of_le _ _ y x hxy' hy₂
-              have hyy'' : - padicValRat p (y + x) ≤ - padicValRat p y :=
-              neg_le_neg hyy'
-              have hyy''' : - padicValRat p (x + y) ≤ - padicValRat p y := by
+              apply zpow_le_of_le _ _
+              · apply Nat.one_le_cast.mpr (Nat.one_le_iff_ne_zero.mpr _)
+                simp [hp.1.ne_zero]
+              · simp only [neg_le_neg_iff]
                 rw [add_comm]
-                exact hyy''
-              have hp' : (1 : NNReal) ≤ p := by
-                have hp₂ : p ≠ 0 := by simp [hp.1.ne_zero]
-                have hp₃ : 1 ≤ p := by exact Iff.mpr Nat.one_le_iff_ne_zero hp₂
-                exact Iff.mpr Nat.one_le_cast hp₃
-              exact zpow_le_of_le hp' hyy'''
+                apply (@padicValRat.le_padicValRat_add_of_le p hp y x _ _)
+                · exact fun h1 => hxy (Eq.mp (add_comm y x ▸ Eq.refl (y + x = 0)) h1)
+                · exact Int.le_of_lt ((Int.not_le).mp hxx)
 
 
 open Real
@@ -764,10 +750,37 @@ theorem ValuationEqual (v : Valuation ℚ NNReal) {q : ℕ} (hq: Nat.Prime q)
     unfold padicNorm'
     simp [pNorm, *]
   have this'' : (@padicNorm' q (fact_iff.mpr hq)) n = (@padicNorm' q (fact_iff.mpr hq)).toFun n := by rfl
-  rw [this'', this']
-  apply Eq.symm
+  rw [this'', this']; symm
   have hq₀ : 0 ≤ (q : ℝ) := Nat.cast_nonneg q
-  sorry
+  ext; push_cast
+  rw [← Real.rpow_int_cast ↑q (-padicValRat q ↑n), ←Real.rpow_int_cast ↑(v ↑q) (padicValRat q ↑n),
+     ←Real.rpow_mul hq₀ ↑(-padicValRat q ↑n) (-log ↑(v ↑q) / log ↑q)]
+  -- rw [←Real.rpow_mul hq₀ (-padicValRat q ↑n) (-log ↑(v ↑q) / log ↑q)]
+  apply (mul_log_eq_log_iff _ _).mp
+  -- goal: ↑(-padicValRat q ↑n) * (-log ↑(v ↑q) / log ↑q) * log ↑q = log (↑(v ↑q) ^ ↑(padicValRat q ↑n))
+  · calc
+      ↑(-padicValRat q ↑n) * (-log ↑(v ↑q) / log ↑q) * log ↑q = ↑(padicValRat q ↑n) * log ↑(v ↑q) := by
+
+        rw [neg_div (log q) (log (v q))]
+        sorry
+        -- rw [neg_mul_neg (padicValRat q n : ℝ) (log (v q) / log q)]
+      _ = log (↑(v ↑q) ^ ((padicValRat q ↑n) : ℝ)) := by
+        apply (mul_log_eq_log_iff _ _).mpr rfl
+        · norm_cast
+          apply zero_lt_iff.mpr ((Valuation.ne_zero_iff v).mpr (Nat.cast_ne_zero.mpr _))
+          simp [((fact_iff.mpr hq)).1.ne_zero]
+        · apply Real.rpow_pos_of_pos _ ((padicValRat q ↑n) : ℝ)
+          norm_cast
+          apply zero_lt_iff.mpr ((Valuation.ne_zero_iff v).mpr (Nat.cast_ne_zero.mpr _))
+          simp [((fact_iff.mpr hq)).1.ne_zero]
+  · exact Nat.cast_pos.mpr (Nat.Prime.pos hq)
+  · apply Real.rpow_pos_of_pos _ ((padicValRat q ↑n) : ℝ)
+    norm_cast
+    apply zero_lt_iff.mpr ((Valuation.ne_zero_iff v).mpr (Nat.cast_ne_zero.mpr _))
+    simp [((fact_iff.mpr hq)).1.ne_zero]
+
+
+
   -- have eq₁ : ((q : NNReal) ^ ((- padicValRat q n) : ℝ)) = @HPow.hPow NNReal ℤ NNReal _ q (- (@Nat.cast ℤ instNatCastInt (padicValNat q n) )) := by
   --   simp only [NNReal.coe_nat_cast, padicValRat.of_nat, Int.cast_ofNat, zpow_neg, zpow_coe_nat, NNReal.coe_inv, NNReal.coe_pow]
   --   rw [←zpow_coe_nat (q : ℝ) (padicValNat q n), ←zpow_neg (q : ℝ) (padicValNat q n)]
@@ -925,9 +938,7 @@ theorem Valuation.isEquiv_padicNorm_of_nonarchValuation (v : Valuation ℚ NNRea
     smul_mem' := by
       simp only [Set.mem_setOf_eq, smul_eq_mul, Int.cast_mul, map_mul]
       intro a b hb
-      have ha : v a ≤ 1 := vzleone a
-      have hbb : 0 ≤ v b := zero_le (v b)
-      exact mul_lt_one_of_nonneg_of_lt_one_right ha hbb hb
+      exact mul_lt_one_of_nonneg_of_lt_one_right (vzleone a) (zero_le (v b)) hb
   }
   let qZ : Ideal ℤ := Ideal.span {(q:ℤ)}
   have IdealaIspz : Ideala = qZ := by
@@ -1061,7 +1072,7 @@ def MaximalIdealValuRing : Ideal (Valuation.integer v) where
   zero_mem' := by simp only [Set.mem_setOf_eq, ZeroMemClass.coe_zero, map_zero, zero_lt_one]
   smul_mem':= by
     simp
-    intro a ha b hb hbb
+    intro a ha b _ hbb
     have haa : v a ≤ 1 := by exact ha
     have bneg : v b ≥ 0 := by exact zero_le (v b)
     exact mul_lt_one_of_nonneg_of_lt_one_right haa bneg hbb
@@ -1076,7 +1087,6 @@ def IsDiscrete (v : Valuation K NNReal) : Prop
 
 theorem pValIsDiscrete : IsDiscrete (@padicNorm' p hp) := by
   unfold IsDiscrete
-  simp only [Real.rpow_int_cast, gt_iff_lt, exists_prop]
   use p
   have hp₃ : 1 < p :=  @Nat.Prime.one_lt p hp.out
   have this' : p ≠ 0 := by sorry
@@ -1130,6 +1140,7 @@ def HighUnitGroup (n : ℕ) (hn : n ≥ 1)
       simp only [one_div, Set.mem_setOf_eq, OneMemClass.coe_one, Units.val_one, sub_self, map_zero, NNReal.coe_zero,
         inv_pos]
       have : 1 < (ValueOfPrime hv) := (Classical.choose_spec hv).1
+      norm_cast
       refine' Real.rpow_pos_of_pos _ ((n : ℝ) - 1)
       linarith
     inv_mem' := by
