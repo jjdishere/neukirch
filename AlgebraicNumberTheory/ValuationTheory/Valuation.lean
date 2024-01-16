@@ -984,7 +984,7 @@ valiso : ℕ
 #check Valuation.integer
 
 
-def GroupOfUnit : Subgroup Kˣ where
+def GroupOfUnit (v : Valuation K NNReal) : Subgroup Kˣ where
   carrier := { x | v x = 1}
   mul_mem' := by
     simp only [Set.mem_setOf_eq, Units.val_mul, map_mul]
@@ -1044,57 +1044,52 @@ noncomputable def ValueOfPrime {v : Valuation K NNReal} (hv : IsDiscrete v) : �
 def HighUnitGroup (n : ℕ) (hn : n ≥ 1)
   (hv : IsDiscrete v)
   : Subgroup (@GroupOfUnit K _ v) where
-    carrier := { x | v ((1 : K) - ((x : Kˣ): K)) < 1 / ((ValueOfPrime hv) ^ (n - 1))}
+    carrier := { x | v ((1 : K) - ((x : Kˣ): K)) < 1 / ((ValueOfPrime hv) ^ ((n : ℝ) - 1))}
     mul_mem' := by
       simp only [ge_iff_le, one_div, ne_eq, tsub_pos_iff_lt, Set.mem_setOf_eq, Submonoid.coe_mul,
         Subgroup.coe_toSubmonoid, Units.val_mul, Subtype.forall]
       intro a ha₀ b _ ha₁ hb₁
-      have ha : v a = 1 := by exact ha₀
-      have hab : (1 : K) - ↑a * ↑b = ((1 : K)- ↑a) + (↑a - ↑a * ↑b):= by simp only [sub_add_sub_cancel]
-      rw [hab]
-      have hab' : v (((1 : K)- a) + (a - a * b)) ≤ v ((1 : K)- a) ∨ v (((1 : K)- a) + (a - a * b)) ≤ v (a - a * b) :=
-        Valuation.map_add' v (1 - ↑a) (↑a - ↑a * ↑b)
-      rcases hab' with hab₁ | hab₂
-      exact lt_of_le_of_lt hab₁ ha₁
-      have h : ↑a - ↑a * ↑b = ↑a * ((1 : K) - ↑b) := Eq.symm (mul_one_sub (a : K) (b : K))
-      have hab₃ : v (↑a - ↑a * ↑b) = (v ↑a) * (v ((1 : K) - ↑b)) := by
-        rw [h]
-        exact Valuation.map_mul v (↑a) (1 - ↑b)
-      have ha' : v a ≥ 0 := zero_le (v ↑a)
-      rw [ha, one_mul] at hab₃
-      rw [hab₃] at hab₂
-      exact lt_of_le_of_lt hab₂ hb₁
+      calc
+        ((v ((1: K) - ↑a * ↑b)) : ℝ) = (v (((1 : K)- ↑a)+ (↑a - ↑a * ↑b)) : ℝ) := by congr; field_simp
+        _ ≤ max (v ((1 : K)- ↑a) : ℝ) (v (↑a - ↑a * ↑b) : ℝ) := by
+          norm_cast
+          exact Valuation.map_add v ((1: K) - ↑a) (↑a - ↑a * ↑b)
+        _ < (ValueOfPrime hv ^ ((n : ℝ) - 1))⁻¹ := by
+          apply max_lt
+          · exact ha₁
+          · calc
+              (v (↑a - a * b) : ℝ) = (v (↑a * (1 - b)) : ℝ) := by congr; ring
+              _ = (v (1 - ↑b)) := by
+                rw [Valuation.map_mul v (↑a) (1 - ↑b)]; norm_num
+                nth_rw 2 [←one_mul (v (1 - ↑b))]; congr
+              _ < (ValueOfPrime hv ^ ((n : ℝ) - 1))⁻¹ := hb₁
     one_mem' := by
       simp only [one_div, Set.mem_setOf_eq, OneMemClass.coe_one, Units.val_one, sub_self, map_zero, NNReal.coe_zero,
         inv_pos]
       have : 1 < (ValueOfPrime hv) := (Classical.choose_spec hv).1
-      norm_cast
-      refine' Real.rpow_pos_of_pos _ ((n : ℝ) - 1)
+      refine' Real.rpow_pos_of_pos _ ((n - 1) : ℝ)
       linarith
     inv_mem' := by
       simp only [one_div, Set.mem_setOf_eq, SubgroupClass.coe_inv, Units.val_inv_eq_inv_val, Subtype.forall]
       intro a ha₀ ha₁
-      have h : (1 - (a : K)⁻¹) * a = a - (a : K)⁻¹ * a := by exact one_sub_mul ((a: K)⁻¹) (a:K)
-      have h₁ : (1 - (a : K)⁻¹) * a = a - (1 : K) := by
-        simp [h, mul_left_inv a]
-      have h₃ :  v (1 - (a : K)⁻¹) * v (a : K)= v (a - 1) := by
-        rw [←h₁]
-        exact (Valuation.map_mul v (1 - (a : K)⁻¹) (↑a)).symm
-      have h₄ : v ((a : K) - 1) = v (1 - a) := Valuation.map_sub_swap v (a : K) (1 : K)
-      have ha : v a = 1 := by exact ha₀
-      have h₅ : v (1 - (a : K)⁻¹) = v (1 - (a : K)) := by
-       rw [←h₄, ←h₃, ha]
-       simp only [mul_one]
-      have h₆ :(v (1 - (a : K)⁻¹) : ℝ) = (v (1 - (a : K)) : ℝ) := congrArg NNReal.toReal h₅
-      exact Eq.trans_lt (id (h₆)) ha₁
+      calc
+        ((v (1 - (↑a)⁻¹)) : ℝ) = ((v (((↑a) - 1) * ↑(a)⁻¹)): ℝ) := by congr; field_simp
+        _ = (v (1 - (↑a)) : ℝ) * (v (↑(a)⁻¹) : ℝ) := by
+          rw [Valuation.map_mul v ((↑a) - 1) (↑(a)⁻¹), Valuation.map_sub_swap v (a : K) (1 : K)]
+          norm_num
+        _ = (v (1 - (↑a)) : ℝ) := by
+          have : v (↑(a)⁻¹) = 1 := (GroupOfUnit v).inv_mem' ha₀
+          nth_rw 2 [←mul_one (v (1 - (↑a)): ℝ)]; congr; norm_cast
+        _ <  (ValueOfPrime hv ^ ((n : ℝ) - 1))⁻¹ := ha₁
+
 
 
 def Idealp (n : ℕ)  (hn : n ≥ 1)
   (hv : IsDiscrete v): Ideal (Valuation.integer v) where
-    carrier := { x | v (x : K) < 1 / ((ValueOfPrime hv) ^ (n - 1))}
+    carrier := { x | v (x : K) < 1 / ((ValueOfPrime hv) ^ ((n : ℝ) - 1))}
     add_mem' {x y} hx hy := by
       have h : (v (x + y): ℝ) ≤ max ((v x): ℝ) ((v y): ℝ) := v.map_add x y
-      have h₁ : max ((v x) : ℝ) ((v y): ℝ) < 1 / ((ValueOfPrime hv) ^ (n - 1)) := by
+      have h₁ : max ((v x) : ℝ) ((v y): ℝ) < 1 / ((ValueOfPrime hv) ^ ((n : ℝ) - 1)) := by
         refine max_lt ?_ ?_
         · exact hx
         · exact hy
@@ -1107,7 +1102,7 @@ def Idealp (n : ℕ)  (hn : n ≥ 1)
     smul_mem' := by
       simp only [one_div, Set.mem_setOf_eq, smul_eq_mul, Submonoid.coe_mul, Subsemiring.coe_toSubmonoid,
         Subring.coe_toSubsemiring, map_mul, NNReal.coe_mul, Subtype.forall]
-      intro a ha b hb hbb
+      intro a ha b _ hbb
       exact mul_lt_of_le_one_of_lt_of_nonneg ha hbb (NNReal.coe_nonneg (v b))
 
 
