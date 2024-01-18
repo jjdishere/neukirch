@@ -683,39 +683,35 @@ if hq : q = 0 then by
 
 
 theorem padicMap_add_le_max (x y : ℚ) :
-pNorm p (x + y) ≤ pNorm p x ∨ pNorm p (x + y) ≤ pNorm p y :=
-  if hx : x = 0 then by
-  rw [hx, zero_add]
-  right
-  rfl
-  else
-    if hy : y = 0 then by
-    rw [hy, add_zero]
+pNorm p (x + y) ≤ pNorm p x ∨ pNorm p (x + y) ≤ pNorm p y := by
+  by_cases hx : x = 0
+  · rw [hx, zero_add]
+    right
+    rfl
+  by_cases hy : y = 0
+  · rw [hy, add_zero]
     left
     rfl
-    else
-      if hxy : x + y = 0 then by
-        simp [pNorm, *]
-        else
-          if hxx : padicValRat p x ≤ padicValRat p y then by
-            simp [pNorm, *]
-            left
-            rw [←inv_zpow, ←inv_zpow, inv_zpow', inv_zpow']
-            apply zpow_le_of_le _ (neg_le_neg (padicValRat.le_padicValRat_add_of_le hxy hxx))
-            apply Nat.one_le_cast.mpr (Nat.one_le_iff_ne_zero.mpr _)
-            simp [hp.1.ne_zero]
-            else by
-              simp [pNorm, *]
-              right
-              rw [←inv_zpow, ←inv_zpow, inv_zpow', inv_zpow']
-              apply zpow_le_of_le _ _
-              · apply Nat.one_le_cast.mpr (Nat.one_le_iff_ne_zero.mpr _)
-                simp [hp.1.ne_zero]
-              · simp only [neg_le_neg_iff]
-                rw [add_comm]
-                apply (@padicValRat.le_padicValRat_add_of_le p hp y x _ _)
-                · exact fun h1 => hxy (Eq.mp (add_comm y x ▸ Eq.refl (y + x = 0)) h1)
-                · exact Int.le_of_lt ((Int.not_le).mp hxx)
+  by_cases hxy : x + y = 0
+  · simp [pNorm, *]
+  by_cases hxx : padicValRat p x ≤ padicValRat p y
+  · simp [pNorm, *]
+    left
+    rw [←inv_zpow, ←inv_zpow, inv_zpow', inv_zpow']
+    apply zpow_le_of_le _ (neg_le_neg (padicValRat.le_padicValRat_add_of_le hxy hxx))
+    apply Nat.one_le_cast.mpr (Nat.one_le_iff_ne_zero.mpr _)
+    simp [hp.1.ne_zero]
+  · simp [pNorm, *]
+    right
+    rw [←inv_zpow, ←inv_zpow, inv_zpow', inv_zpow']
+    apply zpow_le_of_le _ _
+    · apply Nat.one_le_cast.mpr (Nat.one_le_iff_ne_zero.mpr _)
+      simp [hp.1.ne_zero]
+    · simp only [neg_le_neg_iff]
+      rw [add_comm]
+      apply (@padicValRat.le_padicValRat_add_of_le p hp y x _ _)
+      · exact fun h1 => hxy (Eq.mp (add_comm y x ▸ Eq.refl (y + x = 0)) h1)
+      · exact Int.le_of_lt ((Int.not_le).mp hxx)
 
 
 open Real
@@ -832,6 +828,8 @@ theorem ValuationEquation (v : Valuation ℚ NNReal) (q : ℕ) (hq : Nat.Prime q
       exact congrArg (Nat.pow q) (factorization_eq_padicValNat q hq)
     _ = v ↑q ^ padicValRat q ↑n := by simp only [padicValRat.of_nat, zpow_coe_nat, map_pow]
 
+#check map_prod
+#check map_finsupp_prod
 --change condition
 theorem Valuation.isEquiv_padicNorm_of_nonarchValuation (v : Valuation ℚ NNReal)
     (existvpltone : ∃ (q : ℕ) (hq : Nat.Prime q), v q < 1):
@@ -924,7 +922,8 @@ theorem Valuation.isEquiv_padicNorm_of_nonarchValuation (v : Valuation ℚ NNRea
       rw [IdealaIspz]
       exact this
     exact le_antisymm (vzleone m) (not_lt.mp this')
-  have claim₃ : ∀ (x : ℤ), (¬ x = 0) → v x = ((@padicNorm' q (fact_iff.mpr hq)) x) ^ s := ValuationEqual' v hq (ValuationEqual v hq (ValuationEquation v q hq heq))
+  have claim₃ : ∀ (x : ℤ), (¬ x = 0) → v x = ((@padicNorm' q (fact_iff.mpr hq)) x) ^ s :=
+    ValuationEqual' v hq <| ValuationEqual v hq <| ValuationEquation v q hq heq
   by_cases hx : x = 0
   · rw [hx, (Valuation.map_zero v), (Valuation.map_zero (@padicNorm' q (fact_iff.mpr hq)))]
     symm; ext; push_cast
@@ -942,7 +941,6 @@ theorem Valuation.isEquiv_padicNorm_of_nonarchValuation (v : Valuation ℚ NNRea
         simp only [map_div₀]
         ext; push_cast
         exact (Real.div_rpow (NNReal.coe_nonneg _) (NNReal.coe_nonneg _) s)
-
 
 section
 
@@ -1104,6 +1102,66 @@ def Idealp (n : ℕ)  (hn : n ≥ 1)
         Subring.coe_toSubsemiring, map_mul, NNReal.coe_mul, Subtype.forall]
       intro a ha b _ hbb
       exact mul_lt_of_le_one_of_lt_of_nonneg ha hbb (NNReal.coe_nonneg (v b))
+
+#check Nat.factors
+#check Nat.prime_of_mem_factors
+#check Nat.prod_factors
+#check Nat.factors_unique
+
+
+theorem Valuation.nontrivialVal (v : Valuation ℚ NNReal) (h : ∃ (x : ℚ), (x ≠ 0) ∧ (v x : ℝ) ≠ 1) :
+  ∃ (q : ℕ), Nat.Prime q ∧ v q < (1 : ℝ) := by
+  by_contra hq
+  simp at hq
+  rcases h with ⟨x, h⟩
+  have claim₁ : ∀ (n : ℕ), v n ≤ (1 : ℝ)  := by
+    intro n
+    induction' n with n hn
+    simp only [Nat.zero_eq, CharP.cast_eq_zero, map_zero, zero_le]
+    simp
+    rw [Nat.succ_eq_add_one]
+    have trivial : v (↑n + 1) = v ↑(n + 1) := by congr; norm_cast
+    rcases (Valuation.map_add' v (↑n) 1) with hn₁ | hn₂
+    rw [trivial] at hn₁
+    exact le_trans hn₁ hn
+    rw [trivial] at hn₂
+    exact le_trans hn₂ (id (Valuation.map_one v).symm).ge
+  have claim₃ : ∀ (q : ℕ), Nat.Prime q → v q = (1 : ℝ) := by
+    intro q hqprime
+    linarith [hq q hqprime, claim₁ q]
+  norm_cast at claim₃
+  have contra : ∀ (n : ℕ), (n ≠ 0) → v n = 1 := by
+    intro n hn
+    rw [←Nat.factorization_prod_pow_eq_self hn]
+    push_cast
+    rw [map_finsupp_prod, Finsupp.prod]
+    apply Finset.prod_eq_one
+    intro p hp
+    rw [map_pow, claim₃, one_pow]
+    simp at hp
+    exact hp.1
+  have contra₁ : ∀ (n : ℤ), (n ≠ 0) → v n = 1 := by
+    intro x hx
+    cases x with
+    | ofNat x =>
+      have : x ≠ 0 := by exact Iff.mp Int.ofNat_ne_zero hx
+      exact contra x this
+    | negSucc x =>
+      rw [← Valuation.map_neg]
+      simp only [Int.cast_negSucc, Nat.cast_add, Nat.cast_one, neg_add_rev, neg_neg]
+      calc
+        v (↑x + 1) = v ↑(x + 1) := by congr; norm_num
+        _ = 1 := contra (x + 1) (Nat.succ_ne_zero x)
+  rcases h with ⟨hx, h⟩
+  have contra' : (v x : ℝ) = 1 := by
+    rw [←Rat.num_div_den x]
+    calc
+      (v (↑x.num / ↑x.den) : ℝ) = v (↑x.num) / v (↑x.den) := by simp [map_div₀]
+      _ = 1 := by
+        norm_num [contra₁ x.num (Rat.num_ne_zero_of_ne_zero hx), contra x.den ((Rat.den_nz x))]
+  exact h contra'
+
+
 
 
 -- theorem UnitGroupIsomorphism (n : ℕ) (hn : n ≥ 1) (hv : ∃ (q : ℝ) (hq : q > 1), ∀ (x : Kˣ), ∃ (n : ℤ), v x = q ^ n):
