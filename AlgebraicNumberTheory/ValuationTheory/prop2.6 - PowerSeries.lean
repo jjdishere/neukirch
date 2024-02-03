@@ -2,7 +2,7 @@
 GOAL: prove `ℤ⟦X⟧⧸(X-p) ≃ ℤ_[p]`
 
 Current goals :
-  1) show that `eval₂` is a ring morphism, i.e. `eval₂RingHom`
+  1) show that `PowerSeries.eval₂` is a ring morphism, i.e. `eval₂RingHom`
   2) find a good way to express `R → ℤ_[p]` surjective
 
 The explicit parameter `R` with `CommRing R` in
@@ -10,8 +10,6 @@ PowerSeries might causes some incompatibility of
 notations in this file. Will be fix later.
 
 How to rw a term in a finsum?
-
-Can i use `(n : ℕ) {h : a hypothesis on n}`?
 
 -/
 
@@ -28,7 +26,7 @@ noncomputable section
 variable {R : Type _} [CommRing R]
 variable {S : Type _} [CommRing S] [Nontrivial S]
 variable (f : R →+* S)
-variable (s : nilradical S) (φ : PowerSeries R)
+variable (s : nilradical S)
 
 section nilp
 
@@ -115,10 +113,10 @@ end trunc
 section monomial
 
 theorem X_pow_eq_monomial (n : ℕ) : (X : R⟦X⟧) ^ n = monomial R n 1 := by
-  sorry
+  ext k
+  simp only [coeff_X_pow, coeff_monomial]
 
 end monomial
-
 
 noncomputable section eval₂
 
@@ -128,17 +126,15 @@ def eval₂ (f : R →+* S) (s : nilradical S) (φ : PowerSeries R) : S := (φ.t
 
 theorem eval₂_eq_sum {f : R →+* S} {s : nilradical S} {φ : PowerSeries R}:
   φ.eval₂ f s = φ.sum (choose s.2) fun e a ↦ f a * s.1 ^ e := by
-  sorry
+  simp only [eval₂, sum, Polynomial.eval₂_eq_sum]
 
-theorem eval₂_eq_sum' {f : R →+* S} {s : nilradical S} {φ : PowerSeries R} {n : ℕ} (hn : n ≥ (choose s.2)) :
+theorem eval₂_eq_sum_higher {f : R →+* S} {s : nilradical S} {φ : PowerSeries R} {n : ℕ} (hn : n ≥ (choose s.2)) :
   φ.eval₂ f s = φ.sum n fun e a ↦ f a * s.1 ^ e := by
-  rw [eval₂, sum, ← Polynomial.eval₂_eq_sum, trunc_sub' hn,
-      Polynomial.eval₂_add, self_eq_add_right]
-  -- rw [Polynomial.eval₂_eq_sum]
   sorry
 
 theorem eval₂_eq_Polynomial_eval₂ {f : R →+* S} {s : nilradical S} {φ : PowerSeries R} {n : ℕ} (hn : n ≥ (choose s.2)) :
   φ.eval₂ f s = (φ.trunc n).eval₂ f s.1 := by
+  rw [eval₂]
   sorry
 
 theorem eval₂_congr {f g : R →+* S} {s t : nilradical S} {φ ψ : PowerSeries R} : f = g → s = t → φ = ψ → eval₂ f s φ = eval₂ g t ψ := by
@@ -147,7 +143,7 @@ theorem eval₂_congr {f g : R →+* S} {s t : nilradical S} {φ ψ : PowerSerie
 -- #check choose
 -- #check Polynomial.eval₂_at_zero
 theorem eval₂_at_zero {φ : PowerSeries R} : φ.eval₂ f ⟨0, IsNilpotent.zero⟩ = f (coeff R 0 φ) := by
-  simp only [eval₂._eq_1, Submodule.zero_eq_bot, Ideal.mem_bot, Polynomial.eval₂_at_zero, coeff_trunc]
+  simp only [eval₂, Submodule.zero_eq_bot, Ideal.mem_bot, Polynomial.eval₂_at_zero, coeff_trunc]
   congr 1
   simp only [coeff_zero_eq_constantCoeff, ite_eq_left_iff, not_lt, nonpos_iff_eq_zero]
   contrapose!; intro
@@ -155,18 +151,6 @@ theorem eval₂_at_zero {φ : PowerSeries R} : φ.eval₂ f ⟨0, IsNilpotent.ze
 
 theorem eval₂_zero : (0 : PowerSeries R).eval₂ f s = 0 := by
   simp only [eval₂, Submodule.zero_eq_bot, Ideal.mem_bot, trunc_zero, Polynomial.eval₂_zero]
-
-example (n : ℕ) : n + 1 ≥ n := Nat.le_add_right n 1
-
--- #check Polynomial.eval₂_C
-theorem eval₂_C {a : R} : (C R a).eval₂ f s = f a := by
-  rw [eval₂_eq_sum' (Nat.le_add_right (choose s.2) 1), sum, trunc_C]
-  simp only [map_zero, pow_zero, mul_one, Polynomial.sum_C_index]
-
--- #check Polynomial.eval₂_X
-theorem eval₂_X : X.eval₂ f s = s := by
-  rw [eval₂_eq_sum' (Nat.le_add_right (choose s.2) 2), sum, trunc_X]
-  simp only [map_zero, pow_one, zero_mul, Polynomial.sum_X_index, map_one, one_mul]
 
 -- #check Polynomial.eval₂_monomial
 theorem eval₂_monomial {n : ℕ} {a : R} : (monomial R n a).eval₂ f s = f a * s.1 ^ n := by
@@ -178,12 +162,22 @@ theorem eval₂_monomial {n : ℕ} {a : R} : (monomial R n a).eval₂ f s = f a 
     apply nilp_pow_ge_choose_eq_zero
     linarith
 
+-- #check Polynomial.eval₂_C
+theorem eval₂_C {a : R} : (C R a).eval₂ f s = f a := by
+  rw [← monomial_zero_eq_C_apply, eval₂_monomial]
+  simp only [pow_zero, mul_one]
+
+-- #check Polynomial.eval₂_X
+theorem eval₂_X : X.eval₂ f s = s := by
+  rw [X_eq, eval₂_monomial]
+  simp only [map_one, pow_one, one_mul]
+
 -- #check Polynomial.eval₂_X_pow
 theorem eval₂_X_pow {n : ℕ} : (X ^ n : PowerSeries R).eval₂ f s = s.1 ^ n := by
-  sorry
+  simp only [X_pow_eq_monomial, eval₂_monomial, map_one, one_mul]
 
 -- #check Polynomial.eval₂_add
-theorem eval₂_add (ψ : PowerSeries R): (φ + ψ).eval₂ f s = φ.eval₂ f s + ψ.eval₂ f s := by
+theorem eval₂_add {φ ψ : PowerSeries R} : (φ + ψ).eval₂ f s = φ.eval₂ f s + ψ.eval₂ f s := by
   rw [eval₂, eval₂, eval₂,
       ← Polynomial.eval₂_add, trunc_add]
 
@@ -191,15 +185,17 @@ theorem eval₂_add (ψ : PowerSeries R): (φ + ψ).eval₂ f s = φ.eval₂ f s
 def eval₂AddMonoidHom : PowerSeries R →+ S where
   toFun := eval₂ f s
   map_zero' := eval₂_zero _ _
-  map_add' := eval₂_add _ _
+  map_add' := fun _ _ ↦ eval₂_add _ _
 
 -- #check PowerSeries.C R (1 : R)
 -- #check Polynomial.C (1 : R)
 theorem eval₂_one : (1 : PowerSeries R).eval₂ f s = 1 := by
-  have : (1 : PowerSeries R) = C R (1 : R) := by rfl
+  have : (1 : PowerSeries R) = C R (1 : R) := rfl
   rw [this, eval₂_C, f.map_one]
 
-theorem eval₂_mul {ψ : PowerSeries R} : (φ * ψ).eval₂ f s = φ.eval₂ f s * ψ.eval₂ f s := by
+#check Polynomial.eval₂_mul
+theorem eval₂_mul {φ ψ : PowerSeries R} : (φ * ψ).eval₂ f s = φ.eval₂ f s * ψ.eval₂ f s := by
+  rw [eval₂, eval₂, eval₂, ← Polynomial.eval₂_mul]
   sorry
 
 -- For a nilpotent element `s : S`, assignment `X ↦ s` defines a ring homomorphism `PowerSeries R → S`
@@ -207,7 +203,7 @@ theorem eval₂_mul {ψ : PowerSeries R} : (φ * ψ).eval₂ f s = φ.eval₂ f 
 def eval₂RingHom : PowerSeries R →+* S := {
   eval₂AddMonoidHom f s with
   map_one' := eval₂_one _ _
-  map_mul' := eval₂_mul _ _
+  map_mul' := fun _ _ ↦ eval₂_mul _ _
 }
 
 end eval₂
@@ -223,9 +219,8 @@ theorem ringHom_ext' {f g : R⟦X⟧ →+* S} (h₁ : f.comp (C R) = g.comp (C R
   sorry
 
 -- A ring homomorphism `ℤ⟦X⟧ → R` is determined by its value on `X`.
-theorem ringHom_ext_Z {f g : ℤ⟦X⟧ →+* R} (h₁ : f X = g X) (h₂ : IsNilpotent (f X)) : f = g := by
-  -- apply ringHom_ext' (RingHom.ext_int (RingHom.comp f C) (RingHom.comp g C)) h
-  sorry
+theorem ringHom_ext_Z {f g : ℤ⟦X⟧ →+* R} (h₁ : f X = g X) (h₂ : IsNilpotent (f X)) : f = g :=
+  ringHom_ext' (RingHom.ext_int (RingHom.comp f (C ℤ)) (RingHom.comp g (C ℤ))) h₁ h₂
 
 end ringhom
 
@@ -250,8 +245,7 @@ theorem ZMod.pow_ofPowerSeriesZ_compat :
   ∀ (m n : ℕ) (mlen : m ≤ n),
     RingHom.comp (ZMod.castHom (pow_dvd_pow p mlen) (ZMod (p ^ m))) (ZMod.pow_ofPowerSeriesZ p n) = (ZMod.pow_ofPowerSeriesZ p m) := by
   intro m n mlen
-  apply Eq.symm
-  apply ringHom_ext_Z
+  refine (ringHom_ext_Z ?_ ?_).symm
   · simp only [aux2, RingHom.coe_comp, Function.comp_apply, map_natCast]
   · rw [aux2]; exact nat_mod_pow_nilp
 
