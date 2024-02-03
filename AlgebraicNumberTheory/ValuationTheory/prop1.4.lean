@@ -1,24 +1,22 @@
--- GOAL : Prove `aux1`, i.e., find `y n ∈ ℤ/p^n` forming an inverse limit s.t. `F (y n) = 0`.
+/-
+GOAL : Prove `aux1`, i.e., find `y n ∈ ℤ/p^n` forming an inverse limit s.t. `F (y n) = 0`.
 
+-/
 import Mathlib.NumberTheory.Padics.PadicNorm
 import Mathlib.NumberTheory.Padics.PadicIntegers
 import Mathlib.NumberTheory.Padics.PadicVal
 import Mathlib.NumberTheory.Padics.PadicNumbers
 import Mathlib.Topology.MetricSpace.Completion
 import Mathlib.NumberTheory.Padics.RingHoms
-import Mathlib.Algebra.BigOperators.Ring
 import Mathlib.RingTheory.PowerSeries.WellKnown
 
 variable {p : ℕ} [Fact p.Prime]
 
--- The universal property of `ℤ_[p]` as projective limit. (Commutative Diagram)
+-- The universal property of `ℤ_[p]` as projective limit.
 #check PadicInt.lift_unique
 #check PadicInt.lift_spec
 
-
 open PadicInt
-open BigOperators
-
 
 section Prop_1_4_weaker
 
@@ -26,34 +24,40 @@ open Polynomial
 
 lemma aux0
     {F : Polynomial ℤ} {x : ℕ → ℤ} {n : ℕ} {y : ZMod (p ^ n)} {k : ℕ} :
-  F.eval₂ (Int.castRingHom (ZMod (p ^ n))) (x k : ZMod (p ^ n)) = 0 → Int.castRingHom (ZMod (p ^ n)) (x k : ZMod (p ^ n)) = y
+  F.eval₂ (Int.castRingHom (ZMod (p ^ n))) (x k : ZMod (p ^ n)) = 0 → Int.castRingHom (ZMod (p ^ n)) (x k) = y
   → (
     ∃z : ZMod (p ^ (n + 1)),
     ∃ι : ℕ → ℕ, -- x ∘ ι is a subseq of x
     Monotone ι ∧
-    F.eval₂ (Int.castRingHom (ZMod (p ^ (n + 1)))) (x (ι k) : ZMod (p ^ (n + 1))) = 0 ∧ Int.castRingHom (ZMod (p ^ (n + 1))) (x (ι k) : ZMod (p ^ (n + 1))) = z
-  ) := by sorry
+    F.eval₂ (Int.castRingHom (ZMod (p ^ (n + 1)))) (x (ι k) : ZMod (p ^ (n + 1))) = 0 ∧ Int.castRingHom (ZMod (p ^ (n + 1))) (x (ι k)) = z
+  ) := by
+  sorry
 
+-- Given a series of solutions `mod p^n`, there is a series of compatible solutions `mod p^n`.
 lemma aux1
-    {F : Polynomial ℤ} (h : ∀n : ℕ, ∃x : ZMod (p ^ n), F.eval₂ (Int.castRingHom (ZMod (p ^ n))) x = 0) :
+    {F : Polynomial ℤ}
+    (h : ∀n : ℕ, ∃x : ZMod (p ^ n),
+      F.eval₂ (Int.castRingHom (ZMod (p ^ n))) x = 0) :
   ∃y : (n : ℕ) → ZMod (p ^ n), (
       ∀n : ℕ,
-        F.eval₂ (Int.castRingHom (ZMod (p ^ n))) (y n) = 0 
+        F.eval₂ (Int.castRingHom (ZMod (p ^ n))) (y n) = 0
     ) ∧ (
-      ∀(m n : ℕ) (mlen : m ≤ n), 
+      ∀(m n : ℕ) (mlen : m ≤ n),
         ZMod.castHom (pow_dvd_pow p mlen) (ZMod (p ^ m)) (y n) = y m
     ) := by
-  sorry
+  let y : (n : ℕ) → ZMod (p ^ n) := fun
+    | .zero => 0
+    | .succ n => _
 
 example (m n : ℕ) (mlen : m ≤ n) : p^m ∣ p^n := pow_dvd_pow p mlen
 
 -- A ring homomorphism `ℤ[X] → R` is determined by its value on `X`.
-theorem aux2 {R : Type _} [Semiring R] {f g : Polynomial ℤ →+* R} (h : f X = g X) : f = g :=
+theorem Polynomial.ringHom_ext_Z {R : Type _} [Semiring R] {f g : Polynomial ℤ →+* R} (h : f X = g X) : f = g :=
   ringHom_ext' (RingHom.ext_int (RingHom.comp f C) (RingHom.comp g C)) h
 
-
+-- A polynomial with integral coeff has a solution in `ℤ_[p]` iff it has a solution mod `p ^ n` for all `n : ℕ`
 theorem prop1_4_weaker
-    {F : Polynomial ℤ} : 
+    {F : Polynomial ℤ} :
   (∃x : ℤ_[p], F.eval₂ (Int.castRingHom ℤ_[p]) x = 0) ↔ (∀m : ℕ, ∃x : ZMod (p ^ m), F.eval₂ (Int.castRingHom (ZMod (p ^ m))) x = 0) := by
   constructor
   · rintro ⟨x, Fx⟩ m
@@ -64,12 +68,12 @@ theorem prop1_4_weaker
     exact Fxm
   · intro h
     -- use `aux1`
-    rcases aux1 h with ⟨y, ⟨Fy, cpt⟩⟩ 
+    rcases aux1 h with ⟨y, ⟨Fy, cpt⟩⟩
     let g : (n : ℕ) → Polynomial ℤ →+* ZMod (p ^ n) :=
       fun n ↦ eval₂RingHom (Int.castRingHom (ZMod (p ^ n))) (y n)
     have g_cpt : ∀ (m n : ℕ) (mlen : m ≤ n), RingHom.comp (ZMod.castHom (pow_dvd_pow p mlen) (ZMod (p ^ m))) (g n) = g m := by
       intro m n mlen
-      apply aux2
+      apply Polynomial.ringHom_ext_Z
       simp only [RingHom.coe_comp, coe_eval₂RingHom, Function.comp_apply, eval₂_X, ZMod.castHom_apply]
       exact cpt m n mlen
     -- use PadicInt.limNthHom on `ℤ[X]`
@@ -83,8 +87,6 @@ theorem prop1_4_weaker
     have : y n = (g n) X := by simp only [coe_eval₂RingHom, eval₂_X]
     rw [this, (lift_spec g_cpt n).symm]
     simp only [RingHom.coe_comp, Function.comp_apply]
-
-
 
 
 end Prop_1_4_weaker
