@@ -15,17 +15,11 @@ import Mathlib.RingTheory.DedekindDomain.SelmerGroup
 
 set_option autoImplicit false
 
-set_option maxHeartbeats 500000
-
-set_option synthInstance.maxHeartbeats 30000
-
-
-
 section Localization
 
 open Ideal Localization IsLocalization IsDedekindDomain
 
-variable {R : Type _} [CommRing R] [IsDomain R] (p : Ideal R) [p.IsPrime]
+variable {R : Type*} [CommRing R] [IsDomain R] (p : Ideal R) [p.IsPrime]
 
 
 
@@ -37,12 +31,11 @@ variable {R : Type _} [CommRing R] [IsDomain R] (p : Ideal R) [p.IsPrime]
 
 instance : Algebra (R ⧸ p)
     ((Localization.AtPrime p) ⧸ LocalRing.maximalIdeal (Localization.AtPrime p)) :=
-  Quotient.algebraQuotientOfLeComap (@AtPrime.comap_maximalIdeal _ _ p _).ge
+  Ideal.Quotient.algebraQuotientOfLEComap (Eq.ge (@AtPrime.comap_maximalIdeal _ _ p _))
 
-instance fractionRing_of_quotient_of_prime : IsFractionRing (R ⧸ p)
-  ((Localization.AtPrime p) ⧸ LocalRing.maximalIdeal (Localization.AtPrime p)) := sorry
+instance fractionRing_of_quotient_of_prime : IsFractionRing (R ⧸ p) ((Localization.AtPrime p) ⧸ LocalRing.maximalIdeal (Localization.AtPrime p)) := sorry
 
-theorem quotient_of_maximal_ideal_power_eq_localization [IsMaximal p] (n : ℕ) (h : n ≥ 1): R ⧸ p ^ n
+def quotient_of_maximal_ideal_power_eq_localization [IsMaximal p] (n : ℕ) (h : n ≥ 1): R ⧸ p ^ n
   ≃+* (Localization.AtPrime p) ⧸ LocalRing.maximalIdeal (Localization.AtPrime p) ^ n := sorry
 
 
@@ -66,13 +59,14 @@ instance : IsFractionRing (Localization.AtPrime p) (FractionRing R) :=
   IsFractionRing.isFractionRing_of_isDomain_of_isLocalization (primeCompl p)
   (Localization.AtPrime p) (FractionRing R)
 
-lemma field_toisIntegrallyClosed {R : Type _} [Field R] : IsIntegrallyClosed R := isIntegrallyClosed
-
+lemma field_toisIntegrallyClosed {R : Type*} [Field R] : IsIntegrallyClosed R :=
+  inferInstance
+#check isIntegrallyClosed_iff
 instance isIntegrallyClosed_ofLocalizationMaximal₀ (h : ∀ p : Ideal R, p ≠ ⊥ → [p.IsMaximal] →
     IsIntegrallyClosed (Localization.AtPrime p)) : IsIntegrallyClosed R := by
   by_cases hf : IsField R
   apply @field_toisIntegrallyClosed R (IsField.toField hf)
-  apply (@isIntegrallyClosed_iff R _ _ (FractionRing R) _ _ _).mpr
+  apply (isIntegrallyClosed_iff (FractionRing R)).mpr
   rintro ⟨x⟩ hx
   let I : Ideal R := {
     carrier := { a : R | ∃ y, mk (a * x.1) x.2 = (algebraMap R (FractionRing R)) y }
@@ -80,37 +74,37 @@ instance isIntegrallyClosed_ofLocalizationMaximal₀ (h : ∀ p : Ideal R, p ≠
       intro a b ⟨y, hy⟩ ⟨z, hz⟩
       use y + z
       calc _ = mk (a * x.1) x.2 + mk (b * x.1) x.2 := by
-            rw[add_mk_self (a * x.1) x.2 (b * x.1), add_mul]
-        _ = (algebraMap R (FractionRing R)) y + (algebraMap R (FractionRing R)) z := by rw[hy, hz]
-        _ = _ := by rw[map_add]
-    zero_mem' := by use 0; rw[zero_mul, FractionRing.mk_eq_div, map_zero, zero_div]
+            rw [add_mk_self (a * x.1) x.2 (b * x.1), add_mul]
+        _ = (algebraMap R (FractionRing R)) y + (algebraMap R (FractionRing R)) z := by rw [hy, hz]
+        _ = _ := by rw [map_add]
+    zero_mem' := by use 0; rw [zero_mul, FractionRing.mk_eq_div, map_zero, zero_div]
     smul_mem' := by
       intro a b ⟨y, hy⟩
       use a * y
-      rw[smul_eq_mul, mul_assoc, ← one_mul x.2, ← mk_mul a (b * x.1) 1 x.2, _root_.map_mul, hy]
+      rw [smul_eq_mul, mul_assoc, ← one_mul x.2, ← mk_mul a (b * x.1) 1 x.2, _root_.map_mul, hy]
       rfl
   }
   have ht : I = ⊤ := by
     by_contra hn
     rcases exists_le_maximal I hn with ⟨p, hpm, hpi⟩
     have hic := h p (Ring.ne_bot_of_isMaximal_of_not_isField hpm hf)
-    have hxp : IsIntegral (Localization.AtPrime p) (mk x.1 x.2) :=
-      isIntegral_tower_top_of_isIntegral hx
+    have hxp : IsIntegral (Localization.AtPrime p) (mk x.1 x.2) := IsIntegral.tower_top hx
     rcases (isIntegrallyClosed_iff (FractionRing R)).mp hic hxp with ⟨⟨y⟩, hy⟩
-    have hxy : mk x.1 x.2 = algebraMap (Localization.AtPrime p) (FractionRing R) (mk y.1 y.2)
-      := by rw[← hy]; rfl
+    have hxy : mk x.1 x.2 = algebraMap (Localization.AtPrime p) (FractionRing R) (mk y.1 y.2) := by
+      rw [← hy]
+      rfl
     have hy : mk y.2.1 1 = algebraMap (Localization.AtPrime p) (FractionRing R)
       (algebraMap R (Localization.AtPrime p) y.2.1) := by
-        rw[mk_one_eq_algebraMap, ← IsScalarTower.algebraMap_apply]
+        rw [mk_one_eq_algebraMap, ← IsScalarTower.algebraMap_apply]
     have hyi : y.2.1 ∈ I := by
       use y.1
-      rw[← one_mul x.2, ← mk_mul, hxy, hy, ← _root_.map_mul, mk_eq_mk'_apply, mk'_spec',
+      rw [← one_mul x.2, ← mk_mul, hxy, hy, ← _root_.map_mul, mk_eq_mk'_apply, mk'_spec',
         IsScalarTower.algebraMap_apply R (Localization.AtPrime p) (FractionRing R) y.1]
     exact y.2.2 (hpi hyi)
   have h1 : 1 ∈ I := Eq.mpr (ht ▸ Eq.refl (1 ∈ I)) trivial
   rcases h1 with ⟨y, hy⟩
   use y
-  rw[← hy, one_mul]
+  rw [← hy, one_mul]
   rfl
 
 theorem isIntegrallyClosed_ofLocalizationMaximal :
@@ -119,37 +113,45 @@ theorem isIntegrallyClosed_ofLocalizationMaximal :
 
 
 
-instance IsDedekindDomainDvr.isDedekindDomain (h : IsDedekindDomainDvr R) : IsDedekindDomain R where
-  isNoetherianRing := h.isNoetherianRing
-  dimensionLEOne := {
-    maximalOfPrime := by
-      intro p hp hpp
-      rcases exists_le_maximal p (IsPrime.ne_top hpp) with ⟨q, hq, hpq⟩
-      let f := OrderIso.symm <|
-        orderIsoOfPrime (primeCompl q) (Localization.AtPrime q)
-      let P := f ⟨p, hpp, HasSubset.Subset.disjoint_compl_left hpq⟩
-      let Q := f ⟨q, IsMaximal.isPrime hq, HasSubset.Subset.disjoint_compl_left (Eq.subset rfl)⟩
-      have hinj : Function.Injective (algebraMap R (Localization.AtPrime q)) :=
-        IsLocalization.injective (Localization.AtPrime q) (primeCompl_le_nonZeroDivisors q)
-      have hp1 : P.1 ≠ ⊥ := fun x ↦ hp ((map_eq_bot_iff_of_injective hinj).mp x)
-      have hq1 : Q.1 ≠ ⊥ :=
-        fun x ↦ (ne_bot_of_le_ne_bot hp hpq) ((map_eq_bot_iff_of_injective hinj).mp x)
-      rcases (DiscreteValuationRing.iff_pid_with_one_nonzero_prime (Localization.AtPrime q)).mp
-        (h.is_dvr_at_nonzero_prime q (ne_bot_of_le_ne_bot hp hpq) _) with ⟨_, huq⟩
-      have peqq := Subtype.val_inj.mpr <|
-        OrderIso.injective f (Subtype.val_inj.mp (ExistsUnique.unique huq ⟨hp1, P.2⟩ ⟨hq1, Q.2⟩))
-      simp only at peqq
-      rw[peqq]
-      exact hq
-  }
-  isIntegrallyClosed := by
-    refine' isIntegrallyClosed_ofLocalizationMaximal₀ _
-    intro p hp0 _
-    rcases (DiscreteValuationRing.iff_pid_with_one_nonzero_prime (Localization.AtPrime p)).mp
-      (h.is_dvr_at_nonzero_prime p hp0 _) with ⟨_, _⟩
-    apply UniqueFactorizationMonoid.instIsIntegrallyClosed
+instance IsDedekindDomainDvr.isNoetherian (h : IsDedekindDomainDvr R) : IsNoetherian R R :=
+  h.isNoetherianRing
 
+instance IsDedekindDomainDvr.Ring.DimensionLEOne (h : IsDedekindDomainDvr R) : Ring.DimensionLEOne R
+  where maximalOfPrime := by
+          intro p hp hpp
+          rcases exists_le_maximal p (IsPrime.ne_top hpp) with ⟨q, hq, hpq⟩
+          let f := OrderIso.symm <|
+            orderIsoOfPrime (primeCompl q) (Localization.AtPrime q)
+          let P := f ⟨p, hpp, HasSubset.Subset.disjoint_compl_left hpq⟩
+          let Q := f ⟨q, IsMaximal.isPrime hq, HasSubset.Subset.disjoint_compl_left (Eq.subset rfl)⟩
+          have hinj : Function.Injective (algebraMap R (Localization.AtPrime q)) :=
+            IsLocalization.injective (Localization.AtPrime q) (primeCompl_le_nonZeroDivisors q)
+          have hp1 : P.1 ≠ ⊥ := fun x ↦ hp ((map_eq_bot_iff_of_injective hinj).mp x)
+          have hq1 : Q.1 ≠ ⊥ :=
+            fun x ↦ (ne_bot_of_le_ne_bot hp hpq) ((map_eq_bot_iff_of_injective hinj).mp x)
+          rcases (DiscreteValuationRing.iff_pid_with_one_nonzero_prime (Localization.AtPrime q)).mp
+            (h.is_dvr_at_nonzero_prime q (ne_bot_of_le_ne_bot hp hpq) _) with ⟨_, huq⟩
+          have peqq := Subtype.val_inj.mpr <| OrderIso.injective f <|
+            Subtype.val_inj.mp (ExistsUnique.unique huq ⟨hp1, P.2⟩ ⟨hq1, Q.2⟩)
+          simp only at peqq
+          rw [peqq]
+          exact hq
 
+instance IsDedekindDomainDvr.isIntegrallyClosed (h : IsDedekindDomainDvr R) :
+    IsIntegrallyClosed R := by
+  refine isIntegrallyClosed_ofLocalizationMaximal₀ ?_
+  intro p hp0 _
+  rcases (DiscreteValuationRing.iff_pid_with_one_nonzero_prime (Localization.AtPrime p)).mp
+    (h.is_dvr_at_nonzero_prime p hp0 _) with ⟨_, _⟩
+  exact UniqueFactorizationMonoid.instIsIntegrallyClosed
+
+instance IsDedekindDomainDvr.instIsDedekindRing (h : IsDedekindDomainDvr R) : IsDedekindRing R where
+  __ := h.1
+  __ := IsDedekindDomainDvr.Ring.DimensionLEOne h
+  __ := IsDedekindDomainDvr.isIntegrallyClosed h
+
+instance IsDedekindDomainDvr.instIsDedekindDomain (h : IsDedekindDomainDvr R) : IsDedekindDomain R :=
+  @IsDedekindDomain.mk R _ _ h.instIsDedekindRing
 
 end Localization
 
@@ -175,9 +177,9 @@ noncomputable section
 
 #check Set.unitEquivUnitsInteger
 
-variable {R : Type _} [CommRing R] [IsDomain R] [IsDedekindDomain R]
+variable {R : Type*} [CommRing R] [IsDomain R] [IsDedekindDomain R]
   (S : Set (HeightOneSpectrum R)) [Fintype S] (p : HeightOneSpectrum R)
-  (K : Type _) [Field K] [Algebra R K] [IsFractionRing R K]
+  (K : Type*) [Field K] [Algebra R K] [IsFractionRing R K]
 
 
 
@@ -188,14 +190,14 @@ def unit_to_set_unit : Additive Rˣ →+ Additive (Set.integer S K)ˣ :=
 
 abbrev prime_set_unit : Subgroup Kˣ := Set.unit ({p} : Set (HeightOneSpectrum R))ᶜ K
 
-abbrev set_unit_to_quotient₀ :
-    Additive (Set.integer S K)ˣ →+ Additive (Kˣ⧸prime_set_unit p K) := MonoidHom.toAdditive <|
-  (QuotientGroup.mk' (prime_set_unit p K)).comp (Units.map (algebraMap (Set.integer S K) K))
+abbrev set_unit_to_quotient₀ : Additive (Set.integer S K)ˣ →+ Additive (Kˣ⧸prime_set_unit p K) :=
+  MonoidHom.toAdditive <|
+    (QuotientGroup.mk' (prime_set_unit p K)).comp (Units.map (algebraMap (Set.integer S K) K))
 
-instance : DecidableEq (HeightOneSpectrum R) := Classical.decEq (HeightOneSpectrum R)
+open Classical
 
-instance (p : S) : AddCommMonoid (Additive (Set.integer S K)ˣ →+
-  Additive (Kˣ⧸prime_set_unit p.1 K)) := AddMonoidHom.addCommMonoid
+instance (p : S) : AddCommMonoid (Additive (Set.integer S K)ˣ →+ Additive (Kˣ⧸prime_set_unit p.1 K)) :=
+  @AddMonoidHom.addCommMonoid (Additive (Set.integer S K)ˣ) (Additive (Kˣ⧸prime_set_unit p.1 K)) _ _
 
 def set_unit_to_quotient : Additive (Set.integer S K)ˣ →+
     (⨁ (p : S), Additive (Kˣ⧸prime_set_unit p.1 K)) := fromAddMonoid
@@ -205,37 +207,36 @@ def set_unit_to_quotient : Additive (Set.integer S K)ˣ →+
 
 
 def quotient_to_int : (Kˣ⧸prime_set_unit p K) →* Multiplicative ℤ := by
-  refine' QuotientGroup.lift (prime_set_unit p K) (HeightOneSpectrum.valuationOfNeZero p) _
+  refine QuotientGroup.lift (prime_set_unit p K) (HeightOneSpectrum.valuationOfNeZero p) ?_
   intro x hx
   apply WithZero.coe_inj.mp
-  rw[HeightOneSpectrum.valuationOfNeZero_eq p x, hx p (Iff.mpr Set.not_mem_compl_iff rfl)]
+  rw [HeightOneSpectrum.valuationOfNeZero_eq p x, hx p (Iff.mpr Set.not_mem_compl_iff rfl)]
   rfl
 
-def prime_to_unit_of_FractionalIdeal :
+def prime_to_unit_of_FractionalIdeal (K : Type*) [Field K] [Algebra R K] [IsFractionRing R K] :
   HeightOneSpectrum R → (FractionalIdeal (nonZeroDivisors R) K)ˣ := fun p ↦ {
     val := coeIdeal p.1
     inv := (coeIdeal p.1)⁻¹
-    val_inv := mul_inv_cancel (coeIdeal_ne_zero.mpr (p.ne_bot))
-    inv_val := inv_mul_cancel (coeIdeal_ne_zero.mpr (p.ne_bot))
-  }
+    val_inv := mul_inv_cancel₀ (coeIdeal_ne_zero.mpr (p.ne_bot))
+    inv_val := inv_mul_cancel₀ (coeIdeal_ne_zero.mpr (p.ne_bot))
+}
 
+instance : Pow (FractionalIdeal (nonZeroDivisors R) K)ˣ ℤ := by exact DivInvMonoid.Pow
 def int_to_unit_of_FractionalIdeal :
     Multiplicative ℤ →* (FractionalIdeal (nonZeroDivisors R) K)ˣ where
-  toFun n := Pow.pow (prime_to_unit_of_FractionalIdeal K p) (Multiplicative.toAdd.1 n)
-  map_one' := rfl
-  map_mul' := fun m n ↦ (by
-    simp only [Equiv.toFun_as_coe_apply, toAdd_mul]
-    apply zpow_add)
+  toFun n := (prime_to_unit_of_FractionalIdeal K p) ^ (Multiplicative.toAdd.toFun n)
+  map_one' := zpow_eq_one_iff_modEq.mpr rfl
+  map_mul' m n := by simpa only [Equiv.toFun_as_coe, toAdd_mul] using zpow_add _ _ _
 
-abbrev quotient_to_ClassGroup₀ : Kˣ⧸prime_set_unit p K →* ClassGroup R :=
+abbrev quotient_to_ClassGroup₀ : Kˣ ⧸ prime_set_unit p K →* ClassGroup R :=
   ClassGroup.mk.comp ((int_to_unit_of_FractionalIdeal p K).comp (quotient_to_int p K))
 
 def quotient_to_ClassGroup :
-    (⨁ (p : S), Additive (Kˣ⧸prime_set_unit p.1 K)) →+ Additive (ClassGroup R) :=
+    (⨁ (p : S), Additive (Kˣ ⧸ prime_set_unit p.1 K)) →+ Additive (ClassGroup R) :=
   toAddMonoid (fun (p : S) ↦ MonoidHom.toAdditive (quotient_to_ClassGroup₀ p.1 K))
 
 
-
+/-
 instance (A : Subalgebra R K) : IsFractionRing A K where
   map_units' := fun x ↦ isUnit_iff_exists_inv.mpr ⟨x.1.1⁻¹, (mul_inv_eq_one₀
     (fun h ↦ (nonZeroDivisors.coe_ne_zero x) (by apply Subtype.val_inj.mp; rw[h]; rfl))).mpr rfl⟩
@@ -339,7 +340,7 @@ instance : IsLocalization (set_Submonoid S) (Set.integer S K) where
       exact Eq.ge rfl
     · exact Subtype.val_inj.mp <| mul_inv_cancel <|
         (map_ne_zero_iff (algebraMap R K) (NoZeroSMulDivisors.algebraMap_injective R K)).mpr x.2.1
-  surj' := sorry 
+  surj' := sorry
   eq_iff_exists' := sorry
 
 
@@ -373,3 +374,4 @@ def ClassGroup_to_ClassGroup_of_set_unit :
   Additive (ClassGroup R) →+ Additive (ClassGroup (Set.integer S K)) := MonoidHom.toAdditive <|
     (@ClassGroup.equiv (Set.integer S K) K _ _ _ _ _).symm.toMonoidHom.comp <|
       (ClassGroup_to_ClassGroup_of_set_unit₀ S K).comp (ClassGroup.equiv K).toMonoidHom
+ -/
